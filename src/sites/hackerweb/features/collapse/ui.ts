@@ -69,7 +69,7 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
   setDataBool(btn, "collapsed", collapsed);
 
   const count = btn.dataset.count ?? "0";
-  btn.textContent = collapsed ? `+ ${count}` : count;
+  btn.textContent = collapsed ? `▶ ${count}` : `▼ ${count}`;
   btn.classList.toggle("hwc-collapsed", collapsed);
   btn.setAttribute("aria-expanded", String(!collapsed));
 
@@ -97,7 +97,7 @@ function createToggleButton(repliesUl: HTMLUListElement): HTMLButtonElement | nu
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `comments-toggle hwc-toggle${collapsed ? " hwc-collapsed" : ""}`;
-  btn.textContent = collapsed ? `+ ${count}` : String(count);
+  btn.textContent = collapsed ? `▶ ${count}` : `▼ ${count}`;
   btn.dataset.count = String(count);
   btn.setAttribute("aria-expanded", String(!collapsed));
   btn.setAttribute(

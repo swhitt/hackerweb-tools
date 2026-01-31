@@ -1,17 +1,34 @@
 const STYLES = `
-/* Toggle button - matches HackerWeb's native style */
+/* Wider main column */
+body > section {
+  max-width: 900px !important;
+}
+
+/* Better readability */
+.comment-content,
+section li > p {
+  line-height: 1.6 !important;
+}
+
+/* More breathing room between comments */
+section li {
+  margin-bottom: 12px !important;
+}
+
+/* Toggle button */
 .hwc-toggle.comments-toggle {
   display: inline-block !important;
-  font-size: .75em !important;
+  font-size: 0.75em !important;
   font-weight: 600 !important;
   margin: 2px 0 !important;
   padding: 2px 4px !important;
   white-space: nowrap !important;
+  color: #828282 !important;
 }
 
-/* Collapsed state - orange accent */
+/* Collapsed state - same muted color */
 .hwc-toggle.hwc-collapsed {
-  color: #df8060 !important;
+  color: #828282 !important;
 }
 
 /* Ancestor highlight on hover */
