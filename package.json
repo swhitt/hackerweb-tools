@@ -4,10 +4,10 @@
   "type": "module",
   "description": "Collection of userscripts for Hacker News and HackerWeb",
   "scripts": {
-    "build": "pnpm build:hackerweb-collapse && pnpm build:hn-links",
+    "build": "bun run build:hackerweb-collapse && bun run build:hn-links",
     "build:hackerweb-collapse": "vite build -c vite/hackerweb-collapse.config.ts",
     "build:hn-links": "vite build -c vite/hn-links.config.ts",
-    "build:watch": "concurrently \"pnpm build:watch:hackerweb-collapse\" \"pnpm build:watch:hn-links\"",
+    "build:watch": "concurrently \"bun run build:watch:hackerweb-collapse\" \"bun run build:watch:hn-links\"",
     "build:watch:hackerweb-collapse": "vite build -c vite/hackerweb-collapse.config.ts --watch",
     "build:watch:hn-links": "vite build -c vite/hn-links.config.ts --watch",
     "test": "vitest",
@@ -25,23 +25,26 @@
   ],
   "author": "Steve Whittaker <swhitt@gmail.com>",
   "license": "MIT",
-  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "bun": ">=1.3.8"
+  },
+  "packageManager": "bun@1.3.8",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@types/node": "^25.0.3",
-    "@vitejs/plugin-basic-ssl": "^2.1.0",
-    "@vitest/ui": "^4.0.16",
+    "@types/node": "^25.1.0",
+    "@vitejs/plugin-basic-ssl": "^2.1.4",
+    "@vitest/ui": "^4.0.18",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.0.0",
+    "globals": "^17.2.0",
     "jiti": "^2.6.1",
     "jsdom": "^27.4.0",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0",
-    "vite": "^7.3.0",
-    "vite-plugin-monkey": "^7.1.8",
-    "vitest": "^4.0.16"
+    "typescript-eslint": "^8.54.0",
+    "vite": "^7.3.1",
+    "vite-plugin-monkey": "^7.1.9",
+    "vitest": "^4.0.18"
   }
 }
