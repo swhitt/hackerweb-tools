@@ -1,13 +1,14 @@
 import { injectStyles } from "./styles";
-import { addCollapseButtons } from "./ui";
+import { injectButtons, setupEventListeners } from "./ui";
 
 let initialized = false;
 
 export function initCollapse() {
   if (!initialized) {
     injectStyles();
+    setupEventListeners();
     initialized = true;
   }
 
-  addCollapseButtons();
+  injectButtons();
 }

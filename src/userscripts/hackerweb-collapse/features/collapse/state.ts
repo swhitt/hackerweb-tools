@@ -44,3 +44,16 @@ export function clearCollapsedState() {
   cache = new Set();
   localStorage.removeItem(STORAGE_KEY);
 }
+
+// Data attribute helpers for button state
+export function setDataBool(
+  el: HTMLElement,
+  key: string,
+  value: boolean
+): void {
+  el.dataset[key] = value ? "true" : "false";
+}
+
+export function getDataBool(el: HTMLElement | null, key: string): boolean {
+  return el?.dataset?.[key] === "true";
+}

@@ -11,6 +11,9 @@ function main() {
 function init() {
   initCollapse();
   observeChanges();
+
+  // Handle SPA navigation via hash changes
+  window.addEventListener("hashchange", () => initCollapse());
 }
 
 function observeChanges() {
