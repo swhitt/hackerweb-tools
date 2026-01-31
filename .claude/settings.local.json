@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(while read p)",
+      "Bash(do:*)",
+      "Bash(done)"
+    ]
+  }
+}

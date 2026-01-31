@@ -1,0 +1,46 @@
+{
+  "name": "hackerweb-collapse",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Collapsible nested comment threads for HackerWeb",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:watch": "vite build --watch",
+    "serve:dist": "npx serve dist -p 8124 --cors",
+    "serve:dist:https": "npx local-ssl-proxy --source 8125 --target 8124",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "userscript",
+    "hackernews",
+    "hackerweb"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.27.0",
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.0.3",
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
+    "@vitest/ui": "^4.0.16",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.0.0",
+    "jiti": "^2.6.1",
+    "jsdom": "^27.4.0",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.51.0",
+    "vite": "^7.3.0",
+    "vite-plugin-monkey": "^7.1.8",
+    "vitest": "^4.0.16"
+  }
+}
