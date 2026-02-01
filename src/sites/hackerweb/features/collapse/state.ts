@@ -1,109 +1,96 @@
 const STORAGE_KEY = "hwc-collapsed";
 const LOG_PREFIX = "[HackerWeb Tools]";
 
-/** Branded type for validated comment IDs */
+/** Branded type for validated comment IDs (numeric strings only). */
 export type CommentId = string & { readonly __brand: "CommentId" };
 
-/** Validate and brand a string as a CommentId (must be numeric) */
+/** Validate and brand a string as a CommentId. */
 export function asCommentId(id: string | null | undefined): CommentId | null {
-  if (!id || !/^\d+$/.test(id)) return null;
-  return id as CommentId;
+  return id && /^\d+$/.test(id) ? (id as CommentId) : null;
 }
 
-/** Runtime validation for localStorage data */
 function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) && value.every((item) => typeof item === "string")
   );
 }
 
-// In-memory cache to avoid repeated localStorage reads. Cleared via clearCollapsedState() or resetCache().
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 let cache: Set<CommentId> | null = null;
 
 function loadState(): Set<CommentId> {
   if (cache) return cache;
-
   cache = new Set<CommentId>();
+
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed: unknown = JSON.parse(stored);
-      if (isStringArray(parsed)) {
-        // Use asCommentId for centralized validation
-        for (const id of parsed) {
-          const validId = asCommentId(id);
-          if (validId) cache.add(validId);
-        }
-      } else {
-        console.warn(
-          LOG_PREFIX,
-          "localStorage data has unexpected format, starting fresh. Expected string array, got:",
-          typeof parsed
-        );
+    if (!stored) return cache;
+
+    const parsed: unknown = JSON.parse(stored);
+    if (isStringArray(parsed)) {
+      for (const id of parsed) {
+        const validId = asCommentId(id);
+        if (validId) cache.add(validId);
       }
+    } else {
+      console.warn(
+        LOG_PREFIX,
+        "localStorage data has unexpected format, starting fresh"
+      );
     }
   } catch (error) {
     console.warn(
       LOG_PREFIX,
-      "Failed to load collapse state from localStorage:",
-      error instanceof Error ? error.message : String(error)
+      "Failed to load collapse state:",
+      formatError(error)
     );
   }
   return cache;
 }
 
-function saveState(state: Set<CommentId>) {
+function saveState(state: Set<CommentId>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...state]));
   } catch (error) {
-    // localStorage might be full or disabled; state won't persist but in-memory cache remains valid
     console.warn(
       LOG_PREFIX,
-      "Failed to save collapse state to localStorage:",
-      error instanceof Error ? error.message : String(error)
+      "Failed to save collapse state:",
+      formatError(error)
     );
   }
 }
 
-export function getCollapsedState(commentId: CommentId) {
+export function getCollapsedState(commentId: CommentId): boolean {
   return loadState().has(commentId);
 }
 
-export function setCollapsedState(commentId: CommentId, collapsed: boolean) {
+export function setCollapsedState(
+  commentId: CommentId,
+  collapsed: boolean
+): void {
   const state = loadState();
-
-  if (collapsed) {
-    state.add(commentId);
-  } else {
-    state.delete(commentId);
-  }
-
+  if (collapsed) state.add(commentId);
+  else state.delete(commentId);
   saveState(state);
 }
 
-export function clearCollapsedState() {
+export function clearCollapsedState(): void {
   cache = null;
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     console.warn(
       LOG_PREFIX,
-      "Failed to clear collapse state from localStorage:",
-      error instanceof Error ? error.message : String(error)
+      "Failed to clear collapse state:",
+      formatError(error)
     );
   }
 }
 
-/** Reset cache without clearing localStorage (for testing) */
-export function resetCache() {
+/** Reset cache without clearing localStorage (for testing). */
+export function resetCache(): void {
   cache = null;
-}
-
-// Data attribute helpers for button state
-export function setDataBool(el: HTMLElement, key: string, value: boolean) {
-  el.dataset[key] = value ? "true" : "false";
-}
-
-export function getDataBool(el: HTMLElement | null, key: string) {
-  return el?.dataset[key] === "true";
 }

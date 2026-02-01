@@ -1,15 +1,13 @@
 import { injectStyles } from "./styles";
 import { injectStoryLinks, injectCommentPageLink } from "./ui";
 
-let stylesInitialized = false;
+let ready = false;
 
 export function initItemLinks(): void {
-  if (!stylesInitialized) {
+  if (!ready) {
     injectStyles();
-    stylesInitialized = true;
+    ready = true;
   }
-
-  // Inject links - these are idempotent (won't double-inject)
   injectStoryLinks();
   injectCommentPageLink();
 }

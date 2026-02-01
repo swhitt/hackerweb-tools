@@ -1,66 +1,64 @@
-import { qs, qsa, getEventTargetElement } from "../../../../utils/dom-helpers";
+import {
+  qs,
+  qsa,
+  getEventTargetElement,
+  setDataBool,
+  getDataBool,
+} from "../../../../utils/dom-helpers";
 import {
   type CommentId,
   asCommentId,
   getCollapsedState,
   setCollapsedState,
-  setDataBool,
-  getDataBool,
 } from "./state";
 
-/** CSS selectors for HackerWeb's nested comment structure. Uses `:scope >` for direct children only. */
-const SELECTORS = {
-  commentLi: "section li",
-  repliesUl: ":scope > ul",
-  childCommentLi: ":scope > li",
-  ourToggle: ":scope > button.hwc-toggle",
+const SEL = {
+  comment: "section li",
+  replies: ":scope > ul",
+  child: ":scope > li",
+  toggle: ":scope > button.hwc-toggle",
   originalToggle: ":scope > button.comments-toggle:not(.hwc-toggle)",
-  anyOurToggle: "button.hwc-toggle",
+  anyToggle: "button.hwc-toggle",
 } as const;
 
-/** Clicks within this many pixels of left edge trigger collapse */
-const LEFT_GUTTER_THRESHOLD_PX = 15;
+const LEFT_GUTTER_PX = 15;
 
-// Comment tree helpers
-function getRepliesUl(li: Element): HTMLUListElement | null {
-  return qs<HTMLUListElement>(SELECTORS.repliesUl, li);
+function getReplies(li: Element): HTMLUListElement | null {
+  return qs<HTMLUListElement>(SEL.replies, li);
 }
 
-function countDescendantReplies(ul: HTMLUListElement | null): number {
+function countReplies(ul: HTMLUListElement | null): number {
   if (!ul) return 0;
-
   let count = 0;
-  for (const childLi of qsa<HTMLLIElement>(SELECTORS.childCommentLi, ul)) {
-    count += 1;
-    count += countDescendantReplies(getRepliesUl(childLi));
+  for (const child of qsa<HTMLLIElement>(SEL.child, ul)) {
+    count += 1 + countReplies(getReplies(child));
   }
   return count;
 }
 
-function findThreadRoot(li: HTMLLIElement): HTMLLIElement {
+function findRoot(li: HTMLLIElement): HTMLLIElement {
   let current = li;
-  let parentLi = current.parentElement?.closest("li");
-  while (parentLi instanceof HTMLLIElement) {
-    current = parentLi;
-    parentLi = current.parentElement?.closest("li");
+  while (current.parentElement?.closest("li") instanceof HTMLLIElement) {
+    current = current.parentElement.closest("li") as HTMLLIElement;
   }
   return current;
 }
 
 function getCommentId(li: HTMLLIElement): CommentId | null {
-  const timeLink = li.querySelector('p.metadata time a[href*="item?id="]');
-  if (timeLink) {
-    const href = timeLink.getAttribute("href");
-    const match = href?.match(/item\?id=(\d+)/);
-    if (match?.[1]) return asCommentId(match[1]);
-  }
-  return asCommentId(li.dataset["id"]) ?? asCommentId(li.id);
+  const href = li
+    .querySelector('p.metadata time a[href*="item?id="]')
+    ?.getAttribute("href");
+  const match = href?.match(/item\?id=(\d+)/);
+  return (
+    asCommentId(match?.[1]) ??
+    asCommentId(li.dataset["id"]) ??
+    asCommentId(li.id)
+  );
 }
 
-// Collapse/expand logic
-function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
-  const ul = getRepliesUl(li);
-  const btn = qs<HTMLButtonElement>(SELECTORS.ourToggle, li);
+function setCollapsed(li: HTMLLIElement, collapsed: boolean): void {
+  const ul = getReplies(li);
+  const btn = qs<HTMLButtonElement>(SEL.toggle, li);
   if (!ul || !btn) return;
 
   ul.style.display = collapsed ? "none" : "";
@@ -71,136 +69,113 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
   btn.setAttribute("aria-expanded", String(!collapsed));
   btn.setAttribute(
     "aria-label",
-    collapsed ? `Expand ${count} replies` : `Collapse ${count} replies`
+    `${collapsed ? "Expand" : "Collapse"} ${count} replies`
   );
 
-  const commentId = getCommentId(li);
-  if (commentId) {
-    setCollapsedState(commentId, collapsed);
-  }
+  const id = getCommentId(li);
+  if (id) setCollapsedState(id, collapsed);
 }
 
-function collapseWholeThread(rootLi: HTMLLIElement) {
-  for (const btn of qsa<HTMLButtonElement>(SELECTORS.anyOurToggle, rootLi)) {
+function collapseThread(root: HTMLLIElement): void {
+  for (const btn of qsa<HTMLButtonElement>(SEL.anyToggle, root)) {
     if (getDataBool(btn, "collapsed")) continue;
     const li = btn.closest("li");
     if (li instanceof HTMLLIElement) setCollapsed(li, true);
   }
 }
 
-function createToggleButton(
-  repliesUl: HTMLUListElement
-): HTMLButtonElement | null {
-  if (!repliesUl.children.length) return null;
+function createToggle(ul: HTMLUListElement): HTMLButtonElement | null {
+  if (!ul.children.length) return null;
 
-  const count = countDescendantReplies(repliesUl);
-  const collapsed = getComputedStyle(repliesUl).display === "none";
+  const count = countReplies(ul);
+  const collapsed = getComputedStyle(ul).display === "none";
 
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `comments-toggle hwc-toggle${collapsed ? " hwc-collapsed" : ""}`;
   btn.innerHTML = `<span class="hwc-arrow">▶</span> ${count}`;
   btn.dataset["count"] = String(count);
+  btn.title = "Click to toggle, Shift+click to collapse thread";
   btn.setAttribute("aria-expanded", String(!collapsed));
   btn.setAttribute(
     "aria-label",
-    collapsed ? `Expand ${count} replies` : `Collapse ${count} replies`
+    `${collapsed ? "Expand" : "Collapse"} ${count} replies`
   );
-  btn.title = "Click to toggle, Shift+click to collapse entire thread";
   setDataBool(btn, "collapsed", collapsed);
 
   return btn;
 }
 
-export function injectButtons() {
-  for (const li of qsa<HTMLLIElement>(SELECTORS.commentLi)) {
-    const repliesUl = getRepliesUl(li);
-    if (!repliesUl?.children.length) continue;
+export function injectButtons(): void {
+  for (const li of qsa<HTMLLIElement>(SEL.comment)) {
+    const ul = getReplies(li);
+    if (!ul?.children.length) continue;
+    if (qs(SEL.toggle, li)) continue;
 
-    // Don't double-inject
-    if (qs(SELECTORS.ourToggle, li)) continue;
+    qs(SEL.originalToggle, li)?.remove();
 
-    // Remove HackerWeb's original toggle so there's only one control
-    qs(SELECTORS.originalToggle, li)?.remove();
+    const btn = createToggle(ul);
+    if (btn) li.insertBefore(btn, ul);
 
-    const btn = createToggleButton(repliesUl);
-    if (btn) li.insertBefore(btn, repliesUl);
-
-    const commentId = getCommentId(li);
-    if (commentId && getCollapsedState(commentId)) {
-      setCollapsed(li, true);
-    }
+    const id = getCommentId(li);
+    if (id && getCollapsedState(id)) setCollapsed(li, true);
   }
 }
 
-// Highlight ancestor chain on hover
-function clearHighlights() {
-  for (const el of qsa(".hwc-hl")) {
-    el.classList.remove("hwc-hl");
-  }
-}
-
-function highlightAncestors(startLi: HTMLLIElement | null) {
-  clearHighlights();
-  let li: Element | null = startLi;
-  while (li instanceof HTMLLIElement) {
+function highlightAncestors(start: HTMLLIElement | null): void {
+  qsa(".hwc-hl").forEach((el) => el.classList.remove("hwc-hl"));
+  for (
+    let li = start;
+    li instanceof HTMLLIElement;
+    li = li.parentElement?.closest("li") ?? null
+  ) {
     li.classList.add("hwc-hl");
-    li = li.parentElement?.closest("li") ?? null;
   }
 }
 
-// Event handlers
-function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement) {
-  event.stopPropagation();
-  event.preventDefault();
+function onToggleClick(e: MouseEvent, btn: HTMLButtonElement): void {
+  e.stopPropagation();
+  e.preventDefault();
 
   const li = btn.closest("li");
   if (!(li instanceof HTMLLIElement)) return;
 
-  // Shift+click collapses the entire thread from root
-  if (event.shiftKey) {
-    collapseWholeThread(findThreadRoot(li));
-    return;
+  if (e.shiftKey) {
+    collapseThread(findRoot(li));
+  } else {
+    setCollapsed(li, !getDataBool(btn, "collapsed"));
   }
-
-  setCollapsed(li, !getDataBool(btn, "collapsed"));
 }
 
-function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement) {
-  // Treat clicks within threshold of left edge as toggle
-  const rect = li.getBoundingClientRect();
-  const clickX = event.clientX - rect.left;
-  if (clickX > LEFT_GUTTER_THRESHOLD_PX) return;
+function onGutterClick(e: MouseEvent, li: HTMLLIElement): void {
+  const clickX = e.clientX - li.getBoundingClientRect().left;
+  if (clickX > LEFT_GUTTER_PX) return;
 
-  const btn = qs<HTMLButtonElement>(SELECTORS.ourToggle, li);
+  const btn = qs<HTMLButtonElement>(SEL.toggle, li);
   if (!btn) return;
 
-  event.preventDefault();
+  e.preventDefault();
   setCollapsed(li, !getDataBool(btn, "collapsed"));
 }
 
-export function setupEventListeners() {
-  // Hover highlighting
-  document.addEventListener("mouseover", (event) => {
-    const target = getEventTargetElement(event);
-    if (!target) return;
-
-    const li = target.closest(SELECTORS.commentLi);
+export function setupEventListeners(): void {
+  document.addEventListener("mouseover", (e) => {
+    const target = getEventTargetElement(e);
+    const li = target?.closest(SEL.comment);
     if (li instanceof HTMLLIElement) highlightAncestors(li);
   });
 
-  // Click handling for toggles and left-gutter
-  document.addEventListener("click", (event) => {
-    const target = getEventTargetElement(event);
+  document.addEventListener("click", (e) => {
+    const target = getEventTargetElement(e);
     if (!target) return;
 
     const btn = target.closest("button.hwc-toggle");
     if (btn instanceof HTMLButtonElement) {
-      handleToggleClick(event, btn);
+      onToggleClick(e, btn);
       return;
     }
 
-    const li = target.closest(SELECTORS.commentLi);
-    if (li instanceof HTMLLIElement) handleLeftGutterClick(event, li);
+    const li = target.closest(SEL.comment);
+    if (li instanceof HTMLLIElement) onGutterClick(e, li);
   });
 }

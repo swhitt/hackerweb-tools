@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters -- standard DOM helper pattern */
 
-/** Type-safe querySelector wrapper. */
+/** Type-safe querySelector. */
 export function qs<T extends Element = Element>(
   sel: string,
   root: Element | Document = document
@@ -8,7 +8,7 @@ export function qs<T extends Element = Element>(
   return root.querySelector(sel);
 }
 
-/** Type-safe querySelectorAll wrapper. */
+/** Type-safe querySelectorAll. */
 export function qsa<T extends Element = Element>(
   sel: string,
   root: Element | Document = document
@@ -18,11 +18,21 @@ export function qsa<T extends Element = Element>(
 
 /* eslint-enable @typescript-eslint/no-unnecessary-type-parameters */
 
-/**
- * Safely get the Element from an event target with proper type checking.
- * Returns null if target is not an Element.
- */
+/** Safely extract Element from event target. */
 export function getEventTargetElement(event: Event): Element | null {
-  const target = event.target;
-  return target instanceof Element ? target : null;
+  return event.target instanceof Element ? event.target : null;
+}
+
+/** Set a boolean data attribute. */
+export function setDataBool(
+  el: HTMLElement,
+  key: string,
+  value: boolean
+): void {
+  el.dataset[key] = String(value);
+}
+
+/** Get a boolean data attribute (returns false if missing or not "true"). */
+export function getDataBool(el: HTMLElement | null, key: string): boolean {
+  return el?.dataset[key] === "true";
 }

@@ -1,10 +1,9 @@
 import { injectHeaderLink } from "./ui";
 
-let initialized = false;
+let done = false;
 
 export function initHeaderLink(): void {
-  if (initialized) return;
-  initialized = true;
-
+  if (done) return;
+  done = true;
   injectHeaderLink();
 }
