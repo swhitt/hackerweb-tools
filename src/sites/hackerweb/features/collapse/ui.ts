@@ -107,6 +107,7 @@ function createToggleButton(
     "aria-label",
     collapsed ? `Expand ${count} replies` : `Collapse ${count} replies`
   );
+  btn.title = "Click to toggle, Shift+click to collapse entire thread";
   setDataBool(btn, "collapsed", collapsed);
 
   return btn;

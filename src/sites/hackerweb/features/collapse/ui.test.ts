@@ -201,6 +201,18 @@ describe("createToggleButton", () => {
     const btn = getToggleButton(li);
     expect(btn.type).toBe("button");
   });
+
+  it("includes shift+click hint in tooltip", () => {
+    const section = createSection();
+    const li = createCommentLi({ hasReplies: true });
+    section.appendChild(li);
+    document.body.appendChild(section);
+
+    injectButtons();
+
+    const btn = getToggleButton(li);
+    expect(btn.title).toContain("Shift+click");
+  });
 });
 
 describe("injectButtons", () => {

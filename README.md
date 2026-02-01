@@ -2,6 +2,15 @@
 
 Enhancements for Hacker News and HackerWeb.
 
+## What are HackerWeb and hckrnews?
+
+If you're new to the Hacker News ecosystem, these are two excellent alternative frontends:
+
+- **[HackerWeb](https://hackerweb.app/)** - A fast, clean mobile-friendly interface for reading HN. Great for focused reading without distractions.
+- **[hckrnews](https://hckrnews.com/)** - Shows HN stories organized by day with scores, making it easy to catch up on what you missed.
+
+Both are read-only interfaces to the same Hacker News content.
+
 ## Features
 
 | Feature              | Site                 | Description                                            |
