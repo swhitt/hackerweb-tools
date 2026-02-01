@@ -30,17 +30,18 @@ section li {
   white-space: nowrap !important;
   color: #828282 !important;
   background: none !important;
-  background-color: transparent !important;
-  border: none !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 3px !important;
   cursor: pointer !important;
-  transition: color 0.15s ease, background-color 0.15s ease !important;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
 /* Hover state */
 .hwc-toggle.comments-toggle:hover {
-  color: #ff6600 !important;
-  background-color: rgba(255, 102, 0, 0.12) !important;
+  color: #e07020 !important;
+  background-color: rgba(255, 140, 50, 0.10) !important;
+  border-color: rgba(255, 140, 50, 0.25) !important;
 }
 
 /* Active/pressed state */
