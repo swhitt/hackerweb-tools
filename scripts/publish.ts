@@ -7,8 +7,9 @@
  * Steps:
  * 1. Increment build number in config.ts
  * 2. Build the userscript
- * 3. Commit with tag v{version}-{build}
- * 4. Push to GitHub and update gist
+ * 3. Run all checks (typecheck, lint, tests)
+ * 4. Commit with tag v{version}-{build}
+ * 5. Push to GitHub and update gist
  */
 
 import { readFileSync, writeFileSync } from "fs";
@@ -143,6 +144,12 @@ function main() {
   log("Building userscript...");
   run("bun run build", { step: "building userscript" });
   success("Built dist/hackerweb-tools.user.js");
+
+  log("Running checks...");
+  run("bun run typecheck", { step: "typecheck" });
+  run("bun run lint", { step: "lint" });
+  run("bun run test:run", { step: "tests" });
+  success("All checks passed");
 
   log("Committing...");
   run("git add config.ts dist/hackerweb-tools.user.js", {

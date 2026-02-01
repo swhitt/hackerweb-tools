@@ -2,6 +2,19 @@
 
 Enhancements for Hacker News and HackerWeb.
 
+## Install
+
+**[Click to Install](https://gist.githubusercontent.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6/raw/hackerweb-tools.user.js)** (requires [Tampermonkey](https://www.tampermonkey.net/) or [Violentmonkey](https://violentmonkey.github.io/))
+
+![Demo](demo.gif)
+
+## Features
+
+| Feature              | Site                 | Description                                            |
+| -------------------- | -------------------- | ------------------------------------------------------ |
+| Collapsible comments | hackerweb.app        | Collapse/expand comment threads with state persistence |
+| Quick links          | news.ycombinator.com | Links to HackerWeb and hckrnews                        |
+
 ## What are HackerWeb and hckrnews?
 
 If you're new to the Hacker News ecosystem, these are two excellent alternative frontends:
@@ -11,49 +24,17 @@ If you're new to the Hacker News ecosystem, these are two excellent alternative 
 
 Both are read-only interfaces to the same Hacker News content.
 
-## Features
+---
 
-| Feature              | Site                 | Description                                            |
-| -------------------- | -------------------- | ------------------------------------------------------ |
-| Collapsible comments | hackerweb.app        | Collapse/expand comment threads with state persistence |
-| Quick links          | news.ycombinator.com | Links to HackerWeb and hckrnews                        |
-
-## Setup
+## Development
 
 ```sh
 bun install
-```
-
-## Build
-
-```sh
 bun run build          # Build userscript
 bun run build:watch    # Rebuild on changes
 ```
 
-Output: `dist/hackerweb-tools.user.js`
-
-## Publish
-
-```sh
-bun run publish        # Increment build, commit, tag, push, update gist
-bun run publish:dry    # Preview without changes
-```
-
-Version format: `0.0.1-{build}` where build increments each publish.
-
-## Install in Browser
-
-### Tampermonkey / Violentmonkey
-
-1. Open the extension dashboard
-2. Create a new script
-3. Paste the contents of `dist/hackerweb-tools.user.js`
-4. Save
-
-### Development (auto-reload)
-
-For faster iteration, point the extension to your local build:
+### Local Testing
 
 1. Enable "Allow access to file URLs" in extension settings
 2. Create a new script with just a `@require` directive:
@@ -67,3 +48,10 @@ For faster iteration, point the extension to your local build:
    ```
 3. Run `bun run build:watch`
 4. Refresh the page to pick up changes
+
+### Publishing
+
+```sh
+bun run publish        # Increment build, commit, tag, push, update gist
+bun run publish:dry    # Preview without changes
+```
