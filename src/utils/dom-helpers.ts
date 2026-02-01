@@ -1,18 +1,22 @@
-/**
- * Type-safe querySelector wrapper.
- */
-export const qs = <T extends Element>(
-  sel: string,
-  root: Element | Document = document
-): T | null => root.querySelector(sel);
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters -- standard DOM helper pattern */
 
-/**
- * Type-safe querySelectorAll wrapper.
- */
-export const qsa = <T extends Element>(
+/** Type-safe querySelector wrapper. */
+export function qs<T extends Element = Element>(
   sel: string,
   root: Element | Document = document
-): NodeListOf<T> => root.querySelectorAll(sel);
+): T | null {
+  return root.querySelector(sel);
+}
+
+/** Type-safe querySelectorAll wrapper. */
+export function qsa<T extends Element = Element>(
+  sel: string,
+  root: Element | Document = document
+): NodeListOf<T> {
+  return root.querySelectorAll(sel);
+}
+
+/* eslint-enable @typescript-eslint/no-unnecessary-type-parameters */
 
 /**
  * Safely get the Element from an event target with proper type checking.

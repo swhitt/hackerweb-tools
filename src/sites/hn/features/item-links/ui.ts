@@ -16,9 +16,8 @@ function createHackerWebLink(itemId: string): HTMLAnchorElement {
  * Link goes in the subtext row (next to "X comments")
  */
 export function injectStoryLinks(): void {
-  const storyRows = document.querySelectorAll<HTMLTableRowElement>(
-    "tr.athing[id]"
-  );
+  const storyRows =
+    document.querySelectorAll<HTMLTableRowElement>("tr.athing[id]");
 
   for (const row of storyRows) {
     const itemId = row.id;

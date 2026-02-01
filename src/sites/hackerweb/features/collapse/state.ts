@@ -55,5 +55,5 @@ export function setDataBool(
 }
 
 export function getDataBool(el: HTMLElement | null, key: string): boolean {
-  return el?.dataset?.[key] === "true";
+  return el?.dataset[key] === "true";
 }

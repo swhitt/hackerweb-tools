@@ -4,10 +4,10 @@ Enhancements for Hacker News and HackerWeb.
 
 ## Features
 
-| Feature | Site | Description |
-|---------|------|-------------|
-| Collapsible comments | hackerweb.app | Collapse/expand comment threads with state persistence |
-| Quick links | news.ycombinator.com | Links to HackerWeb and hckrnews |
+| Feature              | Site                 | Description                                            |
+| -------------------- | -------------------- | ------------------------------------------------------ |
+| Collapsible comments | hackerweb.app        | Collapse/expand comment threads with state persistence |
+| Quick links          | news.ycombinator.com | Links to HackerWeb and hckrnews                        |
 
 ## Setup
 
