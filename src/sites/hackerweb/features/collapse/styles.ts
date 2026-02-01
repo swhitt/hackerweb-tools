@@ -17,34 +17,36 @@ section li {
   margin-bottom: 12px !important;
 }
 
-/* Toggle button - base styles */
+/* Toggle button - base styles (override HackerWeb defaults) */
 .hwc-toggle.comments-toggle {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.25em !important;
-  font-size: 0.75em !important;
-  font-weight: 600 !important;
+  font-size: 0.85em !important;
+  font-weight: 500 !important;
   font-variant-numeric: tabular-nums !important;
-  margin: 2px 0 !important;
-  padding: 4px 8px !important;
+  margin: 4px 0 !important;
+  padding: 2px 6px !important;
   white-space: nowrap !important;
   color: #828282 !important;
-  background: transparent !important;
+  background: none !important;
+  background-color: transparent !important;
   border: none !important;
-  border-radius: 4px !important;
+  border-radius: 3px !important;
   cursor: pointer !important;
-  transition: color 0.15s ease, background-color 0.15s ease, transform 0.1s ease !important;
+  transition: color 0.15s ease, background-color 0.15s ease !important;
 }
 
 /* Hover state */
 .hwc-toggle.comments-toggle:hover {
   color: #ff6600 !important;
-  background: rgba(255, 102, 0, 0.08) !important;
+  background-color: rgba(255, 102, 0, 0.12) !important;
 }
 
 /* Active/pressed state */
 .hwc-toggle.comments-toggle:active {
-  transform: scale(0.96) !important;
+  color: #ff6600 !important;
+  background-color: rgba(255, 102, 0, 0.2) !important;
 }
 
 /* Focus state for keyboard users */
