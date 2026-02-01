@@ -6,14 +6,19 @@ Enhancements for Hacker News and HackerWeb.
 
 **[Click to Install](https://gist.githubusercontent.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6/raw/hackerweb-tools.user.js)** (requires [Tampermonkey](https://www.tampermonkey.net/) or [Violentmonkey](https://violentmonkey.github.io/))
 
-![Demo](demo.gif)
-
 ## Features
 
-| Feature              | Site                 | Description                                            |
-| -------------------- | -------------------- | ------------------------------------------------------ |
-| Collapsible comments | hackerweb.app        | Collapse/expand comment threads with state persistence |
-| Quick links          | news.ycombinator.com | Links to HackerWeb and hckrnews                        |
+### HackerWeb (hackerweb.app)
+
+- **Collapsible comments** - Click the toggle or left gutter to collapse threads
+- **Shift+click** - Collapse an entire thread from any comment
+- **Hover highlighting** - See the ancestor chain when hovering over comments
+- **State persistence** - Collapsed comments stay collapsed across sessions
+- **Wider content** - More readable column width
+
+### Hacker News (news.ycombinator.com)
+
+- **Quick links** - Jump to HackerWeb or hckrnews from any story
 
 ## What are HackerWeb and hckrnews?
 
@@ -55,3 +60,7 @@ bun run build:watch    # Rebuild on changes
 bun run publish        # Increment build, commit, tag, push, update gist
 bun run publish:dry    # Preview without changes
 ```
+
+---
+
+**[View on Gist](https://gist.github.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6)** · **[View on GitHub](https://github.com/swhitt/hackerweb-tools)**
