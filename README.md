@@ -18,11 +18,20 @@ bun install
 ## Build
 
 ```sh
-bun run build          # Build script
+bun run build          # Build userscript
 bun run build:watch    # Rebuild on changes
 ```
 
 Output: `dist/hackerweb-tools.user.js`
+
+## Publish
+
+```sh
+bun run publish        # Increment build, commit, tag, push, update gist
+bun run publish:dry    # Preview without changes
+```
+
+Version format: `0.0.1-{build}` where build increments each publish.
 
 ## Install in Browser
 

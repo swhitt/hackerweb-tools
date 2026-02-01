@@ -9,13 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Chevron toggle indicators for collapsible comments
+- Shift+click toggle to collapse entire comment thread
+- Left gutter click to collapse comments
+- Hover highlighting for ancestor comment chain
+- Publish script for automated gist releases (`bun run publish`)
+- Chevron toggle indicators with CSS rotation animation
 - Pre-commit hooks with lefthook (lint, format, typecheck)
 - Auto-update support from GitHub gist
 
 ### Changed
 
 - Wider content column on HackerWeb for better readability
+- localStorage errors now logged for debugging
 
 ## [1.0.0] - 2026-01-31
 

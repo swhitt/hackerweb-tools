@@ -8,6 +8,7 @@ import {
   getDataBool,
 } from "./state";
 
+/** CSS selectors for HackerWeb's nested comment structure. Uses `:scope >` for direct children only. */
 const SELECTORS = {
   commentLi: "section li",
   repliesUl: ":scope > ul",
@@ -74,7 +75,6 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
     collapsed ? `Expand ${count} replies` : `Collapse ${count} replies`
   );
 
-  // Persist to localStorage
   const commentId = getCommentId(li);
   if (commentId) {
     setCollapsedState(commentId, collapsed);
@@ -126,7 +126,6 @@ export function injectButtons() {
     const btn = createToggleButton(repliesUl);
     if (btn) li.insertBefore(btn, repliesUl);
 
-    // Restore persisted collapsed state
     const commentId = getCommentId(li);
     if (commentId && getCollapsedState(commentId)) {
       setCollapsed(li, true);

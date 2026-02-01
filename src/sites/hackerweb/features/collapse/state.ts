@@ -1,4 +1,5 @@
 const STORAGE_KEY = "hwc-collapsed";
+const LOG_PREFIX = "[HackerWeb Tools]";
 
 /** Branded type for validated comment IDs */
 export type CommentId = string & { readonly __brand: "CommentId" };
@@ -16,37 +17,51 @@ function isStringArray(value: unknown): value is string[] {
   );
 }
 
-// In-memory cache to avoid repeated localStorage reads
+// In-memory cache to avoid repeated localStorage reads. Cleared via clearCollapsedState() or resetCache().
 let cache: Set<CommentId> | null = null;
 
-function loadState() {
+function loadState(): Set<CommentId> {
   if (cache) return cache;
 
+  cache = new Set<CommentId>();
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed: unknown = JSON.parse(stored);
       if (isStringArray(parsed)) {
-        // Filter to only valid CommentIds
-        cache = new Set(parsed.filter((id) => /^\d+$/.test(id)) as CommentId[]);
+        // Use asCommentId for centralized validation
+        for (const id of parsed) {
+          const validId = asCommentId(id);
+          if (validId) cache.add(validId);
+        }
       } else {
-        cache = new Set();
+        console.warn(
+          LOG_PREFIX,
+          "localStorage data has unexpected format, starting fresh. Expected string array, got:",
+          typeof parsed
+        );
       }
-    } else {
-      cache = new Set();
     }
-  } catch {
-    cache = new Set();
+  } catch (error) {
+    console.warn(
+      LOG_PREFIX,
+      "Failed to load collapse state from localStorage:",
+      error instanceof Error ? error.message : String(error)
+    );
   }
-
   return cache;
 }
 
 function saveState(state: Set<CommentId>) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...state]));
-  } catch {
-    // localStorage might be full or disabled
+  } catch (error) {
+    // localStorage might be full or disabled; state won't persist but in-memory cache remains valid
+    console.warn(
+      LOG_PREFIX,
+      "Failed to save collapse state to localStorage:",
+      error instanceof Error ? error.message : String(error)
+    );
   }
 }
 
@@ -68,7 +83,15 @@ export function setCollapsedState(commentId: CommentId, collapsed: boolean) {
 
 export function clearCollapsedState() {
   cache = null;
-  localStorage.removeItem(STORAGE_KEY);
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.warn(
+      LOG_PREFIX,
+      "Failed to clear collapse state from localStorage:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 }
 
 /** Reset cache without clearing localStorage (for testing) */

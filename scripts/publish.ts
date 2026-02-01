@@ -34,23 +34,31 @@ function error(msg: string) {
   console.error(`\x1b[31m✗\x1b[0m ${msg}`);
 }
 
-function run(cmd: string, opts?: { silent?: boolean }): string {
+function run(cmd: string, opts?: { silent?: boolean; step?: string }): string {
   if (DRY_RUN && !cmd.startsWith("git status") && !cmd.startsWith("cat")) {
     log(`[dry-run] Would run: ${cmd}`);
     return "";
   }
-  const result = execSync(cmd, { cwd: ROOT, encoding: "utf-8" });
-  if (!opts?.silent) {
-    log(cmd);
+  try {
+    const result = execSync(cmd, { cwd: ROOT, encoding: "utf-8" });
+    if (!opts?.silent) {
+      log(cmd);
+    }
+    return result.trim();
+  } catch (err) {
+    const step = opts?.step ? ` during "${opts.step}"` : "";
+    const stderr =
+      err instanceof Error && "stderr" in err ? String(err.stderr) : "";
+    throw new Error(
+      `Command failed${step}: ${cmd}\n${stderr || (err instanceof Error ? err.message : String(err))}`
+    );
   }
-  return result.trim();
 }
 
 function ask(question: string): string {
   return prompt(`\x1b[33m?\x1b[0m ${question}`) ?? "";
 }
 
-// Read and parse config
 function readConfig(): { version: string; build: number; gistId: string } {
   const content = readFileSync(CONFIG_PATH, "utf-8");
 
@@ -69,7 +77,6 @@ function readConfig(): { version: string; build: number; gistId: string } {
   return { version, build: parseInt(buildStr, 10), gistId };
 }
 
-// Update build number in config
 function updateBuild(newBuild: number): void {
   let content = readFileSync(CONFIG_PATH, "utf-8");
   content = content.replace(
@@ -81,14 +88,12 @@ function updateBuild(newBuild: number): void {
   }
 }
 
-// Get unreleased changes from CHANGELOG
 function getUnreleasedChanges(): string {
   const content = readFileSync(CHANGELOG_PATH, "utf-8");
   const unreleasedRe = /## \[Unreleased\]\n([\s\S]*?)(?=\n## \[|$)/;
   return unreleasedRe.exec(content)?.[1]?.trim() ?? "";
 }
 
-// Main
 function main() {
   console.log("\n\x1b[1m📦 HackerWeb Tools Publisher\x1b[0m\n");
 
@@ -96,7 +101,7 @@ function main() {
     console.log("\x1b[33m⚠ DRY RUN MODE - no changes will be made\x1b[0m\n");
   }
 
-  // Check for clean working tree (allow staged changes)
+  // Require clean working tree
   const status = run("git status --porcelain", { silent: true });
   const unstagedChanges = status
     .split("\n")
@@ -107,7 +112,6 @@ function main() {
     process.exit(1);
   }
 
-  // Read current config
   const config = readConfig();
   const newBuild = config.build + 1;
   const fullVersion = `${config.version}-${newBuild}`;
@@ -117,7 +121,6 @@ function main() {
   log(`New:     ${tag}`);
   console.log();
 
-  // Show unreleased changes
   const unreleased = getUnreleasedChanges();
   if (unreleased) {
     console.log("\x1b[2mUnreleased changes:\x1b[0m");
@@ -125,7 +128,6 @@ function main() {
     console.log();
   }
 
-  // Confirm
   if (!DRY_RUN) {
     const answer = ask("Publish this version? [y/N]");
     if (answer.toLowerCase() !== "y") {
@@ -134,36 +136,32 @@ function main() {
     }
   }
 
-  // 1. Increment build number
   log("Incrementing build number...");
   updateBuild(newBuild);
   success(`Updated config.ts: build = ${newBuild}`);
 
-  // 2. Build
   log("Building userscript...");
-  run("bun run build");
+  run("bun run build", { step: "building userscript" });
   success("Built dist/hackerweb-tools.user.js");
 
-  // 3. Stage and commit
   log("Committing...");
-  run("git add config.ts dist/hackerweb-tools.user.js");
-  run(`git commit -m "Release ${tag}"`);
+  run("git add config.ts dist/hackerweb-tools.user.js", {
+    step: "staging files",
+  });
+  run(`git commit -m "Release ${tag}"`, { step: "committing" });
   success(`Committed: Release ${tag}`);
 
-  // 4. Tag
   log("Tagging...");
-  run(`git tag -a ${tag} -m "Release ${tag}"`);
+  run(`git tag -a ${tag} -m "Release ${tag}"`, { step: "creating tag" });
   success(`Tagged: ${tag}`);
 
-  // 5. Push to GitHub
   log("Pushing to GitHub...");
-  run("git push");
-  run("git push --tags");
+  run("git push", { step: "pushing to GitHub" });
+  run("git push --tags", { step: "pushing tags" });
   success("Pushed to origin");
 
-  // 6. Update gist
   log("Updating gist...");
-  run(`gh gist edit ${config.gistId} ${DIST_PATH}`);
+  run(`gh gist edit ${config.gistId} ${DIST_PATH}`, { step: "updating gist" });
   success("Gist updated");
 
   console.log(`\n\x1b[32m✓ Published ${tag}\x1b[0m\n`);
