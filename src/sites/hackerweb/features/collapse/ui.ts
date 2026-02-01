@@ -65,10 +65,9 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
 
   ul.style.display = collapsed ? "none" : "";
   setDataBool(btn, "collapsed", collapsed);
+  btn.classList.toggle("hwc-collapsed", collapsed);
 
   const count = btn.dataset["count"] ?? "0";
-  btn.innerHTML = `<span class="hwc-arrow">▶</span> ${count}`;
-  btn.classList.toggle("hwc-collapsed", collapsed);
   btn.setAttribute("aria-expanded", String(!collapsed));
   btn.setAttribute(
     "aria-label",
