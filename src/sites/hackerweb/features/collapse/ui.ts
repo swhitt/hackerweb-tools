@@ -1,5 +1,7 @@
 import { qs, qsa, getEventTargetElement } from "../../../../utils/dom-helpers";
 import {
+  type CommentId,
+  asCommentId,
   getCollapsedState,
   setCollapsedState,
   setDataBool,
@@ -44,18 +46,18 @@ function findThreadRoot(li: HTMLLIElement): HTMLLIElement {
   return current;
 }
 
-function getCommentId(li: HTMLLIElement): string | null {
+function getCommentId(li: HTMLLIElement): CommentId | null {
   const timeLink = li.querySelector('p.metadata time a[href*="item?id="]');
   if (timeLink) {
     const href = timeLink.getAttribute("href");
     const match = href?.match(/item\?id=(\d+)/);
-    if (match?.[1]) return match[1];
+    if (match?.[1]) return asCommentId(match[1]);
   }
-  return li.dataset["id"] ?? (li.id || null);
+  return asCommentId(li.dataset["id"]) ?? asCommentId(li.id);
 }
 
 // Collapse/expand logic
-function setCollapsed(li: HTMLLIElement, collapsed: boolean): void {
+function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
   const ul = getRepliesUl(li);
   const btn = qs<HTMLButtonElement>(SELECTORS.ourToggle, li);
   if (!ul || !btn) return;
@@ -64,9 +66,13 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean): void {
   setDataBool(btn, "collapsed", collapsed);
 
   const count = btn.dataset["count"] ?? "0";
-  btn.textContent = collapsed ? `▶ ${count}` : `▼ ${count}`;
+  btn.innerHTML = `<span class="hwc-arrow">▶</span> ${count}`;
   btn.classList.toggle("hwc-collapsed", collapsed);
   btn.setAttribute("aria-expanded", String(!collapsed));
+  btn.setAttribute(
+    "aria-label",
+    collapsed ? `Expand ${count} replies` : `Collapse ${count} replies`
+  );
 
   // Persist to localStorage
   const commentId = getCommentId(li);
@@ -75,7 +81,7 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean): void {
   }
 }
 
-function collapseWholeThread(rootLi: HTMLLIElement): void {
+function collapseWholeThread(rootLi: HTMLLIElement) {
   for (const btn of qsa<HTMLButtonElement>(SELECTORS.anyOurToggle, rootLi)) {
     if (getDataBool(btn, "collapsed")) continue;
     const li = btn.closest("li");
@@ -94,7 +100,7 @@ function createToggleButton(
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `comments-toggle hwc-toggle${collapsed ? " hwc-collapsed" : ""}`;
-  btn.textContent = collapsed ? `▶ ${count}` : `▼ ${count}`;
+  btn.innerHTML = `<span class="hwc-arrow">▶</span> ${count}`;
   btn.dataset["count"] = String(count);
   btn.setAttribute("aria-expanded", String(!collapsed));
   btn.setAttribute(
@@ -106,7 +112,7 @@ function createToggleButton(
   return btn;
 }
 
-export function injectButtons(): void {
+export function injectButtons() {
   for (const li of qsa<HTMLLIElement>(SELECTORS.commentLi)) {
     const repliesUl = getRepliesUl(li);
     if (!repliesUl?.children.length) continue;
@@ -129,13 +135,13 @@ export function injectButtons(): void {
 }
 
 // Highlight ancestor chain on hover
-function clearHighlights(): void {
+function clearHighlights() {
   for (const el of qsa(".hwc-hl")) {
     el.classList.remove("hwc-hl");
   }
 }
 
-function highlightAncestors(startLi: HTMLLIElement | null): void {
+function highlightAncestors(startLi: HTMLLIElement | null) {
   clearHighlights();
   let li: Element | null = startLi;
   while (li instanceof HTMLLIElement) {
@@ -145,7 +151,7 @@ function highlightAncestors(startLi: HTMLLIElement | null): void {
 }
 
 // Event handlers
-function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement): void {
+function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement) {
   event.stopPropagation();
   event.preventDefault();
 
@@ -161,7 +167,7 @@ function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement): void {
   setCollapsed(li, !getDataBool(btn, "collapsed"));
 }
 
-function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement): void {
+function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement) {
   // Treat clicks within threshold of left edge as toggle
   const rect = li.getBoundingClientRect();
   const clickX = event.clientX - rect.left;
@@ -174,7 +180,7 @@ function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement): void {
   setCollapsed(li, !getDataBool(btn, "collapsed"));
 }
 
-export function setupEventListeners(): void {
+export function setupEventListeners() {
   // Hover highlighting
   document.addEventListener("mouseover", (event) => {
     const target = getEventTargetElement(event);

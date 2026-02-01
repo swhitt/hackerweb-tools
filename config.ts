@@ -1,3 +1,8 @@
+// Version: bump `build` for each gist push, `version` for releases
+export const version = "0.0.1";
+export const build = 2;
+export const fullVersion = `${version}-${build}`;
+
 // Gist configuration for auto-updates
 // Fork this repo? Update these values to point to your own gist
 export const gist = {

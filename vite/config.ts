@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import monkey from "vite-plugin-monkey";
-import { updateUrl, gist } from "../config";
+import { updateUrl, gist, fullVersion } from "../config";
 
 export default defineConfig({
   plugins: [
@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "HackerWeb Tools",
         namespace: "https://github.com/swhitt",
-        version: "1.0.0",
+        version: fullVersion,
         description:
           "Enhancements for Hacker News and HackerWeb: collapsible comments, quick navigation links",
         match: ["https://hackerweb.app/*", "https://news.ycombinator.com/*"],

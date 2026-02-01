@@ -1,6 +1,18 @@
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import { injectButtons, setupEventListeners } from "./ui";
-import { clearCollapsedState, setCollapsedState } from "./state";
+import {
+  type CommentId,
+  asCommentId,
+  clearCollapsedState,
+  setCollapsedState,
+} from "./state";
+
+/** Helper to create valid CommentIds for tests */
+function commentId(id: string): CommentId {
+  const result = asCommentId(id);
+  if (!result) throw new Error(`Invalid test CommentId: ${id}`);
+  return result;
+}
 
 // Track if event listeners have been set up (they persist across tests in jsdom)
 let eventListenersInitialized = false;
@@ -115,7 +127,7 @@ describe("createToggleButton", () => {
 
     const btn = li.querySelector("button.hwc-toggle");
     // Should show expanded chevron and count
-    expect(btn?.textContent).toBe("▼ 3");
+    expect(btn?.textContent).toBe("▶ 3");
   });
 
   it("creates button with collapsed chevron when replies are hidden", () => {
@@ -268,7 +280,7 @@ describe("injectButtons", () => {
     document.body.appendChild(section);
 
     // Set collapsed state before injection
-    setCollapsedState("99999", true);
+    setCollapsedState(commentId("99999"), true);
 
     injectButtons();
 
@@ -365,7 +377,7 @@ describe("setCollapsed (via button click)", () => {
     const btn = li.querySelector("button.hwc-toggle") as HTMLButtonElement;
 
     // Initially expanded
-    expect(btn.textContent).toBe("▼ 3");
+    expect(btn.textContent).toBe("▶ 3");
 
     btn.click();
 
@@ -391,7 +403,7 @@ describe("setCollapsed (via button click)", () => {
 
     btn.click();
 
-    expect(btn.textContent).toBe("▼ 4");
+    expect(btn.textContent).toBe("▶ 4");
   });
 
   it("toggles hwc-collapsed class on button", () => {
