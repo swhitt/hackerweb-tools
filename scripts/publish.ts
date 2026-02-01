@@ -152,9 +152,7 @@ function main() {
   success("All checks passed");
 
   log("Committing...");
-  run("git add config.ts dist/hackerweb-tools.user.js", {
-    step: "staging files",
-  });
+  run("git add config.ts", { step: "staging files" });
   run(`git commit -m "Release ${tag}"`, { step: "committing" });
   success(`Committed: Release ${tag}`);
 
