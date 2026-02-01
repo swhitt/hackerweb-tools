@@ -1,24 +1,9 @@
+import { createDebouncedObserver } from "../../utils/observer-factory";
 import { initCollapse } from "./features/collapse";
 
-export function init() {
+export function init(): void {
   initCollapse();
-  observeChanges();
+  createDebouncedObserver(() => initCollapse());
 
   window.addEventListener("hashchange", () => initCollapse());
-}
-
-function observeChanges() {
-  let pending = false;
-
-  const observer = new MutationObserver(() => {
-    if (pending) return;
-    pending = true;
-
-    requestAnimationFrame(() => {
-      initCollapse();
-      pending = false;
-    });
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
 }

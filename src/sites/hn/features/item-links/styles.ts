@@ -1,3 +1,5 @@
+import { createStyleInjector } from "../../../../utils/style-injector";
+
 const STYLES = `
 /* HackerWeb link styling */
 .hn-links-hweb {
@@ -11,21 +13,8 @@ const STYLES = `
 }
 `;
 
-let injected = false;
+const inject = createStyleInjector("hn-links-styles");
 
 export function injectStyles(): void {
-  if (injected) return;
-  injected = true;
-
-  if (typeof GM_addStyle === "function") {
-    GM_addStyle(STYLES);
-    return;
-  }
-
-  const style = document.createElement("style");
-  style.id = "hn-links-styles";
-  style.textContent = STYLES;
-  document.head.appendChild(style);
+  inject(STYLES);
 }
-
-declare function GM_addStyle(css: string): void;

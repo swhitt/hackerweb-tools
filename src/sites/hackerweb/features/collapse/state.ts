@@ -16,7 +16,7 @@ function loadState(): Set<string> {
   return cache;
 }
 
-function saveState(state: Set<string>) {
+function saveState(state: Set<string>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...state]));
   } catch {
@@ -28,7 +28,7 @@ export function getCollapsedState(commentId: string): boolean {
   return loadState().has(commentId);
 }
 
-export function setCollapsedState(commentId: string, collapsed: boolean) {
+export function setCollapsedState(commentId: string, collapsed: boolean): void {
   const state = loadState();
 
   if (collapsed) {
@@ -40,7 +40,7 @@ export function setCollapsedState(commentId: string, collapsed: boolean) {
   saveState(state);
 }
 
-export function clearCollapsedState() {
+export function clearCollapsedState(): void {
   cache = new Set();
   localStorage.removeItem(STORAGE_KEY);
 }

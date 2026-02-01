@@ -1,24 +1,9 @@
+import { createDebouncedObserver } from "../../utils/observer-factory";
 import { initHeaderLink } from "./features/header-link";
 import { initItemLinks } from "./features/item-links";
 
-export function init() {
+export function init(): void {
   initHeaderLink();
   initItemLinks();
-  observeChanges();
-}
-
-function observeChanges() {
-  let pending = false;
-
-  const observer = new MutationObserver(() => {
-    if (pending) return;
-    pending = true;
-
-    requestAnimationFrame(() => {
-      initItemLinks();
-      pending = false;
-    });
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
+  createDebouncedObserver(() => initItemLinks());
 }

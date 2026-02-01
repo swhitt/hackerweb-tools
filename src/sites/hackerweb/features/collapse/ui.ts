@@ -1,3 +1,4 @@
+import { qs, qsa, getEventTargetElement } from "../../../../utils/dom-helpers";
 import {
   getCollapsedState,
   setCollapsedState,
@@ -14,15 +15,8 @@ const SELECTORS = {
   anyOurToggle: "button.hwc-toggle",
 } as const;
 
-const qs = <T extends Element>(
-  sel: string,
-  root: Element | Document = document
-): T | null => root.querySelector(sel);
-
-const qsa = <T extends Element>(
-  sel: string,
-  root: Element | Document = document
-): NodeListOf<T> => root.querySelectorAll(sel);
+/** Clicks within this many pixels of left edge trigger collapse */
+const LEFT_GUTTER_THRESHOLD_PX = 15;
 
 // Comment tree helpers
 function getRepliesUl(li: Element): HTMLUListElement | null {
@@ -43,7 +37,9 @@ function countDescendantReplies(ul: HTMLUListElement | null): number {
 function findThreadRoot(li: HTMLLIElement): HTMLLIElement {
   let current: HTMLLIElement = li;
   while (true) {
-    const parentLi = current.parentElement?.closest("li") as HTMLLIElement | null;
+    const parentLi = current.parentElement?.closest(
+      "li"
+    ) as HTMLLIElement | null;
     if (!parentLi) return current;
     current = parentLi;
   }
@@ -60,7 +56,7 @@ function getCommentId(li: HTMLLIElement): string | null {
 }
 
 // Collapse/expand logic
-function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
+function setCollapsed(li: HTMLLIElement, collapsed: boolean): void {
   const ul = getRepliesUl(li);
   const btn = qs<HTMLButtonElement>(SELECTORS.ourToggle, li);
   if (!ul || !btn) return;
@@ -80,7 +76,7 @@ function setCollapsed(li: HTMLLIElement, collapsed: boolean) {
   }
 }
 
-function collapseWholeThread(rootLi: HTMLLIElement) {
+function collapseWholeThread(rootLi: HTMLLIElement): void {
   for (const btn of qsa<HTMLButtonElement>(SELECTORS.anyOurToggle, rootLi)) {
     if (getDataBool(btn, "collapsed")) continue;
     const li = btn.closest("li") as HTMLLIElement | null;
@@ -88,7 +84,9 @@ function collapseWholeThread(rootLi: HTMLLIElement) {
   }
 }
 
-function createToggleButton(repliesUl: HTMLUListElement): HTMLButtonElement | null {
+function createToggleButton(
+  repliesUl: HTMLUListElement
+): HTMLButtonElement | null {
   if (!repliesUl?.children?.length) return null;
 
   const count = countDescendantReplies(repliesUl);
@@ -109,7 +107,7 @@ function createToggleButton(repliesUl: HTMLUListElement): HTMLButtonElement | nu
   return btn;
 }
 
-export function injectButtons() {
+export function injectButtons(): void {
   for (const li of qsa<HTMLLIElement>(SELECTORS.commentLi)) {
     const repliesUl = getRepliesUl(li);
     if (!repliesUl?.children?.length) continue;
@@ -132,13 +130,13 @@ export function injectButtons() {
 }
 
 // Highlight ancestor chain on hover
-function clearHighlights() {
+function clearHighlights(): void {
   for (const el of qsa(".hwc-hl")) {
     el.classList.remove("hwc-hl");
   }
 }
 
-function highlightAncestors(li: HTMLLIElement | null) {
+function highlightAncestors(li: HTMLLIElement | null): void {
   clearHighlights();
   while (li) {
     li.classList.add("hwc-hl");
@@ -147,7 +145,7 @@ function highlightAncestors(li: HTMLLIElement | null) {
 }
 
 // Event handlers
-function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement) {
+function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement): void {
   event.stopPropagation();
   event.preventDefault();
 
@@ -163,11 +161,11 @@ function handleToggleClick(event: MouseEvent, btn: HTMLButtonElement) {
   setCollapsed(li, !getDataBool(btn, "collapsed"));
 }
 
-function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement) {
-  // Treat clicks within 15px of left edge as toggle
+function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement): void {
+  // Treat clicks within threshold of left edge as toggle
   const rect = li.getBoundingClientRect();
   const clickX = event.clientX - rect.left;
-  if (clickX > 15) return;
+  if (clickX > LEFT_GUTTER_THRESHOLD_PX) return;
 
   const btn = qs<HTMLButtonElement>(SELECTORS.ourToggle, li);
   if (!btn) return;
@@ -176,28 +174,28 @@ function handleLeftGutterClick(event: MouseEvent, li: HTMLLIElement) {
   setCollapsed(li, !getDataBool(btn, "collapsed"));
 }
 
-export function setupEventListeners() {
+export function setupEventListeners(): void {
   // Hover highlighting
   document.addEventListener("mouseover", (event) => {
-    const li = (event.target as Element).closest(
-      SELECTORS.commentLi
-    ) as HTMLLIElement | null;
+    const target = getEventTargetElement(event);
+    if (!target) return;
+
+    const li = target.closest(SELECTORS.commentLi) as HTMLLIElement | null;
     if (li) highlightAncestors(li);
   });
 
   // Click handling for toggles and left-gutter
   document.addEventListener("click", (event) => {
-    const btn = (event.target as Element).closest(
-      "button.hwc-toggle"
-    ) as HTMLButtonElement | null;
+    const target = getEventTargetElement(event);
+    if (!target) return;
+
+    const btn = target.closest("button.hwc-toggle") as HTMLButtonElement | null;
     if (btn) {
       handleToggleClick(event, btn);
       return;
     }
 
-    const li = (event.target as Element).closest(
-      SELECTORS.commentLi
-    ) as HTMLLIElement | null;
+    const li = target.closest(SELECTORS.commentLi) as HTMLLIElement | null;
     if (li) handleLeftGutterClick(event, li);
   });
 }

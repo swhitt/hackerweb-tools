@@ -3,7 +3,7 @@ import { injectButtons, setupEventListeners } from "./ui";
 
 let initialized = false;
 
-export function initCollapse() {
+export function initCollapse(): void {
   if (!initialized) {
     injectStyles();
     setupEventListeners();

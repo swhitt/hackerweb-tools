@@ -1,3 +1,5 @@
+import { createStyleInjector } from "../../../../utils/style-injector";
+
 const STYLES = `
 /* Wider main column */
 body > section {
@@ -37,21 +39,8 @@ li.hwc-hl {
 }
 `;
 
-let injected = false;
+const inject = createStyleInjector("hwc-styles");
 
-export function injectStyles() {
-  if (injected) return;
-  injected = true;
-
-  if (typeof GM_addStyle === "function") {
-    GM_addStyle(STYLES);
-    return;
-  }
-
-  const style = document.createElement("style");
-  style.id = "hwc-styles";
-  style.textContent = STYLES;
-  document.head.appendChild(style);
+export function injectStyles(): void {
+  inject(STYLES);
 }
-
-declare function GM_addStyle(css: string): void;

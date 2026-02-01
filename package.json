@@ -9,6 +9,7 @@
     "build:watch": "vite build -c vite/config.ts --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:ui": "vitest --ui",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
