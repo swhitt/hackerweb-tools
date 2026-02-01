@@ -68,7 +68,7 @@ section li {
 /* Arrow indicator with rotation */
 .hwc-toggle .hwc-arrow {
   display: inline-block !important;
-  transition: transform 0.2s cubic-bezier(0.34, 1.3, 0.64, 1) !important;
+  transition: transform 0.1s ease-out !important;
 }
 
 .hwc-toggle:not(.hwc-collapsed) .hwc-arrow {
