@@ -11,6 +11,7 @@ import {
   getCollapsedState,
   setCollapsedState,
 } from "./state";
+import { getThreshold } from "../../../../config";
 
 const SEL = {
   comment: "section li",
@@ -20,8 +21,6 @@ const SEL = {
   originalToggle: ":scope > button.comments-toggle:not(.hwc-toggle)",
   anyToggle: "button.hwc-toggle",
 } as const;
-
-const LEFT_GUTTER_PX = 15;
 
 function getReplies(li: Element): HTMLUListElement | null {
   return qs<HTMLUListElement>(SEL.replies, li);
@@ -149,7 +148,7 @@ function onToggleClick(e: MouseEvent, btn: HTMLButtonElement): void {
 
 function onGutterClick(e: MouseEvent, li: HTMLLIElement): void {
   const clickX = e.clientX - li.getBoundingClientRect().left;
-  if (clickX > LEFT_GUTTER_PX) return;
+  if (clickX > getThreshold("gutterClickPx")) return;
 
   const btn = qs<HTMLButtonElement>(SEL.toggle, li);
   if (!btn) return;

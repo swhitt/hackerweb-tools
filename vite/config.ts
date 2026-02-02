@@ -10,6 +10,8 @@ export default defineConfig({
         name: "HackerWeb Tools",
         namespace: "https://github.com/swhitt",
         version: fullVersion,
+        author: "Steve Whittaker",
+        license: "MIT",
         description:
           "Enhancements for Hacker News and HackerWeb: collapsible comments, quick navigation links",
         match: ["https://hackerweb.app/*", "https://news.ycombinator.com/*"],
@@ -17,6 +19,8 @@ export default defineConfig({
         updateURL: updateUrl,
         downloadURL: updateUrl,
         grant: "none",
+        "run-at": "document-end",
+        noframes: true,
       },
       build: {
         fileName: gist.filename,

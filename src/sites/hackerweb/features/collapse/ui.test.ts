@@ -483,7 +483,7 @@ describe("setCollapsed (via button click)", () => {
 
     btn.click(); // Collapse
 
-    const stored = localStorage.getItem("hwc-collapsed");
+    const stored = localStorage.getItem("hwt:state:collapse");
     expect(stored).toBeDefined();
     expect(JSON.parse(stored ?? "[]")).toContain("77777");
   });

@@ -1,9 +1,12 @@
+import { isFeatureEnabled } from "../../../../config";
 import { injectStyles } from "./styles";
 import { injectButtons, setupEventListeners } from "./ui";
 
 let ready = false;
 
 export function initCollapse(): void {
+  if (!isFeatureEnabled("collapse", "hackerweb")) return;
+
   if (!ready) {
     injectStyles();
     setupEventListeners();

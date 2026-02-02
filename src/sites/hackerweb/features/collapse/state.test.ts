@@ -63,7 +63,7 @@ describe("collapse state", () => {
   it("persists to localStorage", () => {
     setCollapsedState(commentId("12345"), true);
 
-    const stored = localStorage.getItem("hwc-collapsed");
+    const stored = localStorage.getItem("hwt:state:collapse");
     expect(stored).toBeDefined();
     expect(JSON.parse(stored ?? "[]")).toContain("12345");
   });
@@ -79,7 +79,7 @@ describe("collapse state", () => {
 
   it("filters invalid data from localStorage", () => {
     // Simulate corrupted localStorage with non-numeric IDs
-    localStorage.setItem("hwc-collapsed", '["12345", "invalid", "67890"]');
+    localStorage.setItem("hwt:state:collapse", '["12345", "invalid", "67890"]');
     resetCache(); // Reset cache to force reload from localStorage
 
     // Valid IDs should be loaded
@@ -88,7 +88,7 @@ describe("collapse state", () => {
   });
 
   it("handles malformed JSON in localStorage", () => {
-    localStorage.setItem("hwc-collapsed", "not valid json");
+    localStorage.setItem("hwt:state:collapse", "not valid json");
     resetCache(); // Reset cache to force reload from localStorage
 
     // Should not throw and return false
@@ -96,7 +96,7 @@ describe("collapse state", () => {
   });
 
   it("handles non-array JSON in localStorage", () => {
-    localStorage.setItem("hwc-collapsed", '{"key": "value"}');
+    localStorage.setItem("hwt:state:collapse", '{"key": "value"}');
     resetCache(); // Reset cache to force reload from localStorage
 
     // Should treat as empty and return false
