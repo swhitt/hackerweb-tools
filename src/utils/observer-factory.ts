@@ -19,7 +19,11 @@ export function createDebouncedObserver(
     pending = true;
 
     requestAnimationFrame(() => {
-      callback();
+      try {
+        callback();
+      } catch (error) {
+        console.error("[HWT Observer] Error in mutation callback:", error);
+      }
       pending = false;
     });
   });

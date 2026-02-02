@@ -22,15 +22,21 @@ const SEL = {
   anyToggle: "button.hwc-toggle",
 } as const;
 
+// Maximum recursion depth for counting replies (prevents stack overflow on malformed DOM)
+const MAX_RECURSION_DEPTH = 100;
+
+// Track currently highlighted elements to avoid O(n) DOM query on every mouseover
+let highlightedElements: HTMLLIElement[] = [];
+
 function getReplies(li: Element): HTMLUListElement | null {
   return qs<HTMLUListElement>(SEL.replies, li);
 }
 
-function countReplies(ul: HTMLUListElement | null): number {
-  if (!ul) return 0;
+function countReplies(ul: HTMLUListElement | null, depth = 0): number {
+  if (!ul || depth > MAX_RECURSION_DEPTH) return 0;
   let count = 0;
   for (const child of qsa<HTMLLIElement>(SEL.child, ul)) {
-    count += 1 + countReplies(getReplies(child));
+    count += 1 + countReplies(getReplies(child), depth + 1);
   }
   return count;
 }
@@ -122,13 +128,20 @@ export function injectButtons(): void {
 }
 
 function highlightAncestors(start: HTMLLIElement | null): void {
-  qsa(".hwc-hl").forEach((el) => el.classList.remove("hwc-hl"));
+  // Clear previously highlighted elements (O(1) instead of O(n) DOM query)
+  for (const el of highlightedElements) {
+    el.classList.remove("hwc-hl");
+  }
+  highlightedElements = [];
+
+  // Highlight ancestors
   for (
     let li = start;
     li instanceof HTMLLIElement;
     li = li.parentElement?.closest("li") ?? null
   ) {
     li.classList.add("hwc-hl");
+    highlightedElements.push(li);
   }
 }
 

@@ -286,7 +286,11 @@ class ConfigStore {
     // Notify nested listeners
     for (const listener of this.nestedListeners) {
       if (listener.section === section && listener.key === key) {
-        listener.callback(newValue, oldValue);
+        try {
+          listener.callback(newValue, oldValue);
+        } catch (error) {
+          console.error(LOG_PREFIX, "Error in config listener:", error);
+        }
       }
     }
 
@@ -295,7 +299,11 @@ class ConfigStore {
     if (sectionListeners) {
       const sectionValue = this.getSection(section);
       for (const callback of sectionListeners) {
-        callback(sectionValue, sectionValue);
+        try {
+          callback(sectionValue, sectionValue);
+        } catch (error) {
+          console.error(LOG_PREFIX, "Error in section listener:", error);
+        }
       }
     }
   }
@@ -308,13 +316,35 @@ class ConfigStore {
   }
 
   /**
+   * Validate imported config has expected structure
+   */
+  private isValidConfig(obj: unknown): obj is DeepPartial<UserConfig> {
+    if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
+      return false;
+    }
+    // Check that all top-level keys are valid config sections
+    const validSections = new Set(Object.keys(DEFAULT_CONFIG));
+    for (const key of Object.keys(obj)) {
+      if (!validSections.has(key)) return false;
+      const section = (obj as Record<string, unknown>)[key];
+      if (typeof section !== "object" || section === null) return false;
+    }
+    return true;
+  }
+
+  /**
    * Import config from JSON string
    */
   import(json: string): boolean {
     try {
+      const parsed: unknown = JSON.parse(json);
+      if (!this.isValidConfig(parsed)) {
+        console.error(LOG_PREFIX, "Invalid config structure");
+        return false;
+      }
+
       const oldConfig = this.config;
-      const imported = JSON.parse(json) as DeepPartial<UserConfig>;
-      this.overrides = imported;
+      this.overrides = parsed;
       this.config = deepMerge(deepClone(DEFAULT_CONFIG), this.overrides);
       this.save(this.overrides);
 

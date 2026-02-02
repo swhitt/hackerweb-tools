@@ -64,6 +64,7 @@ class KeyboardManager {
   private enabled = true;
   private currentScope: "hackerweb" | "hn" | "global" = "global";
   private initialized = false;
+  private boundHandler: ((event: KeyboardEvent) => void) | null = null;
 
   /**
    * Initialize the keyboard manager (call once on startup)
@@ -72,7 +73,20 @@ class KeyboardManager {
     if (this.initialized) return;
     this.initialized = true;
 
-    document.addEventListener("keydown", (event) => this.handleKeydown(event));
+    this.boundHandler = (event) => this.handleKeydown(event);
+    document.addEventListener("keydown", this.boundHandler);
+  }
+
+  /**
+   * Clean up event listeners (for testing and hot reload)
+   */
+  destroy(): void {
+    if (this.boundHandler) {
+      document.removeEventListener("keydown", this.boundHandler);
+      this.boundHandler = null;
+    }
+    this.bindings.clear();
+    this.initialized = false;
   }
 
   /**
@@ -178,12 +192,15 @@ class KeyboardManager {
     const binding = matches[0];
     if (!binding) return;
 
-    const result = binding.handler(event);
-
-    // If handler returns false explicitly, prevent default
-    if (result === false) {
-      event.preventDefault();
-      event.stopPropagation();
+    try {
+      const result = binding.handler(event);
+      // If handler returns false explicitly, prevent default
+      if (result === false) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    } catch (error) {
+      console.error(`[HWT Keys] Error in handler for "${binding.key}":`, error);
     }
   }
 }
@@ -203,5 +220,6 @@ export function getKeyboardManager(): KeyboardManager {
  * Reset the singleton for testing
  */
 export function resetKeyboardManager(): void {
+  instance?.destroy();
   instance = null;
 }

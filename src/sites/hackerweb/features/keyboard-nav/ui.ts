@@ -13,6 +13,9 @@ const SEL = {
 const FOCUS_CLASS = "hwt-kb-focus";
 const HELP_CLASS = "hwt-kb-help";
 
+// Timeout for vim-style "gg" key sequence (ms)
+const GG_SEQUENCE_TIMEOUT_MS = 500;
+
 let focusedIndex = -1;
 let helpVisible = false;
 
@@ -223,7 +226,7 @@ export function registerKeyboardShortcuts(): () => void {
         gPressed = true;
         gTimeout = setTimeout(() => {
           gPressed = false;
-        }, 500);
+        }, GG_SEQUENCE_TIMEOUT_MS);
       }
     },
     {
