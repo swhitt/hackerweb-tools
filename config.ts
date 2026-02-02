@@ -1,6 +1,6 @@
 // Version: bump `build` for each gist push, `version` for releases
 export const version = "0.0.2";
-export const build = 0;
+export const build = 1;
 export const fullVersion = `${version}-${build}`;
 
 /** Gist configuration for userscript auto-updates */
