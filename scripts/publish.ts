@@ -115,10 +115,10 @@ function main() {
 
   const config = readConfig();
   const newBuild = config.build + 1;
-  const fullVersion = `${config.version}-${newBuild}`;
+  const fullVersion = `${config.version}.${newBuild}`;
   const tag = `v${fullVersion}`;
 
-  log(`Current: v${config.version}-${config.build}`);
+  log(`Current: v${config.version}.${config.build}`);
   log(`New:     ${tag}`);
   console.log();
 
