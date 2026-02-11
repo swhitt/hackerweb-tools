@@ -31,6 +31,7 @@
     "vite/**/*",
     "scripts/**/*",
     "*.config.ts",
+    "*.setup.ts",
     "config.ts"
   ]
 }
