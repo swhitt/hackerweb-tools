@@ -19,7 +19,7 @@ export const FEATURE_GROUPS: Record<string, FeatureGroup> = {
   },
   visual: {
     label: "Visual",
-    features: ["darkModeSync", "collapseByDepth"],
+    features: ["darkModeSync", "comfortMode", "collapseByDepth"],
   },
   hnSpecific: {
     label: "HN Features",
@@ -71,6 +71,10 @@ export const FEATURE_LABELS: Record<
   darkModeSync: {
     label: "Dark mode sync",
     description: "Match system dark/light preference",
+  },
+  comfortMode: {
+    label: "Comfort mode",
+    description: "Centered layout with larger fonts",
   },
   collapseByDepth: {
     label: "Auto-collapse by depth",

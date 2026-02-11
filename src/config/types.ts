@@ -21,6 +21,7 @@ export interface Features {
   darkModeSync: boolean;
   readingProgress: boolean;
   commentBookmarks: boolean;
+  comfortMode: boolean;
 }
 
 /**

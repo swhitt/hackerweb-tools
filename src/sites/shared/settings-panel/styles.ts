@@ -60,7 +60,7 @@ export const CSS = `
   width: 360px;
   max-width: 90vw;
   height: 100vh;
-  background: #fff;
+  background: #e5e3dc;
   z-index: 10000;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
   transform: translateX(100%);
@@ -69,7 +69,7 @@ export const CSS = `
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
-  color: #333;
+  color: #3a3a3a;
 }
 
 .hwt-settings-panel.hwt-visible {
@@ -82,15 +82,15 @@ export const CSS = `
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #e5e5e5;
-  background: #fafafa;
+  border-bottom: 1px solid #c5c2b8;
+  background: #dad8d0;
   flex-shrink: 0;
 }
 
 .hwt-settings-title {
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: #2a2a2a;
   margin: 0;
 }
 
@@ -108,13 +108,13 @@ export const CSS = `
 }
 
 .hwt-settings-close:hover {
-  background: #e5e5e5;
+  background: #ccc9c0;
 }
 
 .hwt-settings-close svg {
   width: 20px;
   height: 20px;
-  stroke: #666;
+  stroke: #555;
 }
 
 /* Content area */
@@ -138,13 +138,13 @@ export const CSS = `
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #888;
+  color: #777;
   margin: 0 0 12px 0;
 }
 
 /* Group (card-like container) */
 .hwt-settings-group {
-  background: #f8f8f8;
+  background: #dddbd3;
   border-radius: 10px;
   padding: 4px 0;
   margin-bottom: 12px;
@@ -173,7 +173,7 @@ export const CSS = `
 }
 
 .hwt-settings-row:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .hwt-settings-row-info {
@@ -185,13 +185,13 @@ export const CSS = `
 .hwt-settings-row-label {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: #2a2a2a;
   margin: 0 0 2px 0;
 }
 
 .hwt-settings-row-description {
   font-size: 12px;
-  color: #888;
+  color: #777;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -220,7 +220,7 @@ export const CSS = `
   left: 0;
   right: 0;
   bottom: 0;
-  background: #ddd;
+  background: #b8b5ab;
   border-radius: 24px;
   transition: background 0.25s ease;
 }
@@ -266,12 +266,12 @@ export const CSS = `
 .hwt-number-input {
   width: 70px;
   height: 32px;
-  border: 1px solid #ddd;
+  border: 1px solid #c5c2b8;
   border-radius: 6px;
   padding: 0 8px;
   font-size: 14px;
   text-align: center;
-  background: white;
+  background: #eeecea;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -290,11 +290,11 @@ export const CSS = `
 .hwt-text-input {
   width: 100px;
   height: 32px;
-  border: 1px solid #ddd;
+  border: 1px solid #c5c2b8;
   border-radius: 6px;
   padding: 0 8px;
   font-size: 14px;
-  background: white;
+  background: #eeecea;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -308,11 +308,11 @@ export const CSS = `
 .hwt-color-input {
   width: 44px;
   height: 32px;
-  border: 1px solid #ddd;
+  border: 1px solid #c5c2b8;
   border-radius: 6px;
   padding: 2px;
   cursor: pointer;
-  background: white;
+  background: #eeecea;
 }
 
 .hwt-color-input::-webkit-color-swatch-wrapper {
@@ -330,18 +330,18 @@ export const CSS = `
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  border-top: 1px solid #e5e5e5;
-  background: #fafafa;
+  border-top: 1px solid #c5c2b8;
+  background: #dad8d0;
   flex-shrink: 0;
 }
 
 .hwt-reset-btn {
   padding: 8px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #c5c2b8;
   border-radius: 6px;
-  background: white;
+  background: #eeecea;
   font-size: 13px;
-  color: #666;
+  color: #555;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
@@ -353,7 +353,7 @@ export const CSS = `
 
 .hwt-version {
   font-size: 12px;
-  color: #777;
+  color: #888;
 }
 
 /* Welcome State */
@@ -386,7 +386,7 @@ export const CSS = `
 .hwt-welcome-title {
   font-size: 20px;
   font-weight: 600;
-  color: #333;
+  color: #2a2a2a;
   margin: 0 0 8px 0;
 }
 
@@ -399,7 +399,7 @@ export const CSS = `
 }
 
 .hwt-welcome-shortcuts {
-  background: #f8f8f8;
+  background: #dddbd3;
   border-radius: 10px;
   padding: 16px;
   width: 100%;
@@ -415,16 +415,16 @@ export const CSS = `
 }
 
 .hwt-welcome-shortcut:not(:last-child) {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #c5c2b8;
 }
 
 .hwt-welcome-shortcut-key {
   font-family: ui-monospace, monospace;
   font-size: 12px;
-  background: #e5e5e5;
+  background: #ccc9c0;
   padding: 4px 8px;
   border-radius: 4px;
-  color: #333;
+  color: #2a2a2a;
 }
 
 .hwt-welcome-shortcut-desc {

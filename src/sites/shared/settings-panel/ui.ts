@@ -44,6 +44,29 @@ function isDarkMode(): boolean {
   return false;
 }
 
+/**
+ * Observe dark mode class on documentElement and sync to panel
+ */
+function observeDarkMode(panel: HTMLElement): void {
+  const sync = () => {
+    panel.classList.toggle("hwt-dark", isDarkMode());
+  };
+
+  // Watch for class changes on <html>
+  const observer = new MutationObserver(sync);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+
+  // Also watch system preference changes
+  if (typeof window.matchMedia === "function") {
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", sync);
+  }
+}
+
 // ============================================================================
 // DRY Helpers
 // ============================================================================
@@ -525,6 +548,9 @@ export function createPanel(): HTMLDivElement {
     panel.classList.add("hwt-dark");
   }
 
+  // Keep dark mode in sync with document
+  observeDarkMode(panel);
+
   // Header
   const header = document.createElement("div");
   header.className = "hwt-settings-header";
@@ -597,9 +623,6 @@ export function togglePanel(show?: boolean): void {
 
   if (panelElement) {
     panelElement.classList.toggle("hwt-visible", isOpen);
-    if (isOpen && isDarkMode()) {
-      panelElement.classList.add("hwt-dark");
-    }
   }
 
   if (overlayElement) {

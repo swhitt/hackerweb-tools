@@ -7,6 +7,7 @@ import { initHideRead } from "./features/hide-read";
 import { initKeyboardNav } from "./features/keyboard-nav";
 import { initTimeGrouping } from "./features/time-grouping";
 import { initInlinePreview } from "./features/inline-preview";
+import { initComfortMode } from "./features/comfort-mode";
 import { initDarkMode } from "../shared/dark-mode";
 import { initReadingProgress } from "../shared/reading-progress";
 import { initCommentBookmarks } from "../shared/comment-bookmarks";
@@ -32,6 +33,7 @@ export function init(): void {
   // Initialize features that only need to run once
   initHeaderLink();
   initDarkMode(SITE);
+  initComfortMode();
   initReadingProgress(SITE);
   initKeyboardNav();
 

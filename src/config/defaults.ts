@@ -23,6 +23,7 @@ export const DEFAULT_CONFIG: UserConfig = {
     commentBookmarks: false,
     scoreThreshold: false,
     collapseByDepth: false,
+    comfortMode: false,
     timeGrouping: false,
     inlinePreview: false,
   },
