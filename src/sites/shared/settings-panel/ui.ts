@@ -32,16 +32,10 @@ function isFirstTimeUser(): boolean {
 }
 
 /**
- * Check if dark mode is enabled
+ * Check if dark mode is active (only when the feature has applied it)
  */
 function isDarkMode(): boolean {
-  if (document.documentElement.classList.contains("hwt-dark")) {
-    return true;
-  }
-  if (typeof window.matchMedia === "function") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  }
-  return false;
+  return document.documentElement.classList.contains("hwt-dark");
 }
 
 /**
@@ -52,19 +46,12 @@ function observeDarkMode(panel: HTMLElement): void {
     panel.classList.toggle("hwt-dark", isDarkMode());
   };
 
-  // Watch for class changes on <html>
+  // Watch for class changes on <html> (dark-mode feature toggles hwt-dark there)
   const observer = new MutationObserver(sync);
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ["class"],
   });
-
-  // Also watch system preference changes
-  if (typeof window.matchMedia === "function") {
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", sync);
-  }
 }
 
 // ============================================================================
