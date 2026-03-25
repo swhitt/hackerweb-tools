@@ -6,6 +6,7 @@ import {
   FEATURE_LABELS,
   THRESHOLD_LABELS,
   DISPLAY_LABELS,
+  type DisplayLabelInfo,
 } from "./feature-groups";
 
 let panelElement: HTMLDivElement | null = null;
@@ -439,18 +440,35 @@ function createDisplaySection(): HTMLDivElement {
   return createSection("Display", () => {
     const rows: HTMLElement[] = [];
 
-    for (const [key, info] of Object.entries(DISPLAY_LABELS)) {
-      const displayKey = key as keyof Display;
-      rows.push(
-        createDisplayRow(
-          info.label,
-          configStore.get("display", displayKey),
-          info.type,
-          (value) => {
-            configStore.set("display", displayKey, value);
-          }
-        )
-      );
+    for (const [key, info] of Object.entries(DISPLAY_LABELS) as [
+      keyof Display,
+      DisplayLabelInfo,
+    ][]) {
+      if (info.type === "number") {
+        rows.push(
+          createNumberRow(
+            info.label,
+            configStore.get("display", key) as number,
+            info.min,
+            info.max,
+            info.step ?? 1,
+            (value) => {
+              configStore.set("display", key, value as Display[typeof key]);
+            }
+          )
+        );
+      } else {
+        rows.push(
+          createDisplayRow(
+            info.label,
+            configStore.get("display", key) as string,
+            info.type,
+            (value) => {
+              configStore.set("display", key, value as Display[typeof key]);
+            }
+          )
+        );
+      }
     }
 
     return [createGroup(null, rows)];

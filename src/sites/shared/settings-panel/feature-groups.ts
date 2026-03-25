@@ -145,17 +145,30 @@ export const THRESHOLD_LABELS: Record<
 /**
  * Labels for display settings
  */
-export const DISPLAY_LABELS: Record<
-  keyof Display,
-  { label: string; type: "text" | "color" }
-> = {
+export type DisplayLabelInfo =
+  | { label: string; type: "text" | "color" }
+  | { label: string; type: "number"; min: number; max: number; step?: number };
+
+export const DISPLAY_LABELS: Record<keyof Display, DisplayLabelInfo> = {
   maxContentWidth: {
-    label: "Max content width",
-    type: "text",
+    label: "Max content width (px)",
+    type: "number",
+    min: 400,
+    max: 2000,
+    step: 50,
+  },
+  fontSize: {
+    label: "Font size (px)",
+    type: "number",
+    min: 10,
+    max: 24,
   },
   commentLineHeight: {
-    label: "Comment line height",
-    type: "text",
+    label: "Line height",
+    type: "number",
+    min: 1,
+    max: 3,
+    step: 0.1,
   },
   newCommentColor: {
     label: "New comment color",

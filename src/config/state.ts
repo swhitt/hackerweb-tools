@@ -10,6 +10,7 @@ export type StateKey =
   | "collapse"
   | "visited"
   | "bookmarks"
+  | "bookmarkData"
   | "lastVisit"
   | "newComments";
 

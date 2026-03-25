@@ -77,10 +77,21 @@ export function migrateConfig(stored: StoredConfig): StoredConfig {
         // No changes needed, just bump version
         break;
 
-      // Add future migrations here:
-      // case 1:
-      //   config = migrateV1toV2(config);
-      //   break;
+      case 1: {
+        // v1 → v2: Convert display string values to numbers
+        const display = config.display as Record<string, unknown> | undefined;
+        if (display) {
+          if (typeof display["maxContentWidth"] === "string") {
+            display["maxContentWidth"] =
+              parseInt(display["maxContentWidth"], 10) || 900;
+          }
+          if (typeof display["commentLineHeight"] === "string") {
+            display["commentLineHeight"] =
+              parseFloat(display["commentLineHeight"]) || 1.6;
+          }
+        }
+        break;
+      }
 
       default:
         // Unknown version, reset to defaults

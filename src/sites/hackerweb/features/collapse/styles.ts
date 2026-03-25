@@ -1,15 +1,15 @@
 import { createStyleInjector } from "../../../../utils/style-injector";
+import { getConfigStore } from "../../../../config";
 
 const STYLES = `
-/* Wider main column */
-body > section {
-  max-width: 900px !important;
+/* Display settings driven by CSS custom properties */
+.view {
+  max-width: var(--hwt-max-width) !important;
 }
 
-/* Better readability */
-.comment-content,
-section li > p {
-  line-height: 1.6 !important;
+section li {
+  font-size: var(--hwt-font-size) !important;
+  line-height: var(--hwt-line-height) !important;
 }
 
 /* More breathing room between comments */
@@ -83,6 +83,29 @@ li.hwc-hl {
 
 const inject = createStyleInjector("hwc-styles");
 
+function syncDisplaySettings() {
+  const store = getConfigStore();
+  const root = document.documentElement;
+  root.style.setProperty(
+    "--hwt-max-width",
+    `${store.get("display", "maxContentWidth")}px`
+  );
+  root.style.setProperty(
+    "--hwt-font-size",
+    `${store.get("display", "fontSize")}px`
+  );
+  root.style.setProperty(
+    "--hwt-line-height",
+    String(store.get("display", "commentLineHeight"))
+  );
+}
+
 export function injectStyles() {
   inject(STYLES);
+  syncDisplaySettings();
+
+  const store = getConfigStore();
+  store.subscribe("display", "maxContentWidth", syncDisplaySettings);
+  store.subscribe("display", "fontSize", syncDisplaySettings);
+  store.subscribe("display", "commentLineHeight", syncDisplaySettings);
 }

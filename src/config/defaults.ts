@@ -38,8 +38,9 @@ export const DEFAULT_CONFIG: UserConfig = {
   },
 
   display: {
-    maxContentWidth: "900px",
-    commentLineHeight: "1.5",
+    maxContentWidth: 900,
+    fontSize: 16,
+    commentLineHeight: 1.6,
     newCommentColor: "#ffffcc",
   },
 
@@ -59,4 +60,4 @@ export const DEFAULT_CONFIG: UserConfig = {
  * Current config storage version.
  * Increment when making breaking changes to config structure.
  */
-export const CONFIG_VERSION = 1;
+export const CONFIG_VERSION = 2;

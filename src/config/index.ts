@@ -77,6 +77,6 @@ export function getThreshold(key: keyof Thresholds): number {
  */
 import type { Display } from "./types";
 
-export function getDisplay(key: keyof Display): string {
+export function getDisplay<K extends keyof Display>(key: K): Display[K] {
   return getConfigStore().get("display", key);
 }

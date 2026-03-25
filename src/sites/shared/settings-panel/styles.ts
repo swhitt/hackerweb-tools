@@ -271,6 +271,7 @@ export const CSS = `
   padding: 0 8px;
   font-size: 14px;
   text-align: center;
+  color: #333;
   background: #eeecea;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -294,6 +295,7 @@ export const CSS = `
   border-radius: 6px;
   padding: 0 8px;
   font-size: 14px;
+  color: #333;
   background: #eeecea;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }

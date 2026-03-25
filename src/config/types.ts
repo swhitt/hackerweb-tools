@@ -40,8 +40,9 @@ export interface Thresholds {
  * Display/styling configuration
  */
 export interface Display {
-  maxContentWidth: string;
-  commentLineHeight: string;
+  maxContentWidth: number;
+  fontSize: number;
+  commentLineHeight: number;
   newCommentColor: string;
 }
 

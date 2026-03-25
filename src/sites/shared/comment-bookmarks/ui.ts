@@ -1,5 +1,5 @@
 import { qsa, qs, getEventTargetElement } from "../../../utils/dom-helpers";
-import { SetState } from "../../../config/state";
+import { SetState, MapState } from "../../../config/state";
 
 const BOOKMARK_BTN_CLASS = "hwt-bookmark-btn";
 const PANEL_CLASS = "hwt-bookmarks-panel";
@@ -9,17 +9,28 @@ const BOOKMARKED_ATTR = "data-bookmarked";
 interface Bookmark {
   id: string;
   url: string;
+  title: string;
   text: string;
+  author: string;
   timestamp: number;
 }
 
-// Store bookmark IDs
+// Store bookmark IDs (kept for backward compat with existing bookmarks)
 const bookmarkIds = new SetState<string>("bookmarks");
 
-// Store full bookmark data
-const bookmarkStorage = new Map<string, Bookmark>();
+// Store full bookmark data (persisted to localStorage)
+const bookmarkData = new MapState<string, Bookmark>(
+  "bookmarkData",
+  (v): v is Bookmark =>
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as Bookmark).id === "string" &&
+    typeof (v as Bookmark).text === "string"
+);
 
 let panelVisible = false;
+const PAGE_SIZE = 5;
+let currentPage = 0;
 
 /**
  * HackerWeb selectors
@@ -29,6 +40,8 @@ const SEL_HACKERWEB = {
   metadata: "p.metadata",
   timeLink: 'p.metadata time a[href*="item?id="]',
   content: ":scope > p:not(.metadata)",
+  author: "p.metadata .user",
+  pageTitle: "#view-comments header h1",
 };
 
 /**
@@ -39,6 +52,8 @@ const SEL_HN = {
   metadata: ".comhead",
   timeLink: '.comhead a[href*="item?id="]',
   content: ".commtext",
+  author: ".hnuser",
+  pageTitle: ".titleline > a",
 };
 
 /**
@@ -58,13 +73,56 @@ function getCommentId(
 }
 
 /**
- * Get comment text preview
+ * Get comment text preview (~80 chars stored, displayed truncated by CSS)
  */
 function getCommentText(comment: Element, site: "hackerweb" | "hn"): string {
   const sel = site === "hackerweb" ? SEL_HACKERWEB : SEL_HN;
   const content = qs(sel.content, comment);
   const text = content?.textContent ?? "";
-  return text.slice(0, 100).trim() + (text.length > 100 ? "..." : "");
+  const trimmed = text.slice(0, 80).trim();
+  return trimmed + (text.trim().length > 80 ? "\u2026" : "");
+}
+
+/**
+ * Get comment author
+ */
+function getCommentAuthor(comment: Element, site: "hackerweb" | "hn"): string {
+  const sel = site === "hackerweb" ? SEL_HACKERWEB : SEL_HN;
+  const author = qs(sel.author, comment);
+  return author?.textContent.trim() ?? "";
+}
+
+/**
+ * Get the current page/post title
+ */
+function getPageTitle(site: "hackerweb" | "hn"): string {
+  const sel = site === "hackerweb" ? SEL_HACKERWEB : SEL_HN;
+  return qs(sel.pageTitle)?.textContent.trim() ?? "";
+}
+
+/**
+ * Format relative time
+ */
+function timeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
+/**
+ * Refresh panel if it's currently open
+ */
+function refreshPanel(): void {
+  if (!panelVisible) return;
+  const panel = qs(`.${PANEL_CLASS}`);
+  if (panel) updatePanelContent(panel);
 }
 
 /**
@@ -74,7 +132,7 @@ function createBookmarkButton(isBookmarked: boolean): HTMLSpanElement {
   const btn = document.createElement("span");
   btn.className = BOOKMARK_BTN_CLASS;
   if (isBookmarked) btn.classList.add("bookmarked");
-  btn.textContent = isBookmarked ? "★" : "☆";
+  btn.textContent = isBookmarked ? "\u2605" : "\u2606";
   btn.title = isBookmarked ? "Remove bookmark" : "Bookmark this comment";
   return btn;
 }
@@ -93,27 +151,31 @@ function toggleBookmark(
   const btn = qs<HTMLSpanElement>(`.${BOOKMARK_BTN_CLASS}`, comment);
   if (btn) {
     btn.classList.toggle("bookmarked", isBookmarked);
-    btn.textContent = isBookmarked ? "★" : "☆";
+    btn.textContent = isBookmarked ? "\u2605" : "\u2606";
     btn.title = isBookmarked ? "Remove bookmark" : "Bookmark this comment";
   }
 
   // Update data attribute
   comment.setAttribute(BOOKMARKED_ATTR, String(isBookmarked));
 
-  // Store bookmark data
+  // Store or remove bookmark data
   if (isBookmarked) {
-    bookmarkStorage.set(id, {
+    bookmarkData.set(id, {
       id,
       url: `https://news.ycombinator.com/item?id=${id}`,
+      title: getPageTitle(site),
       text: getCommentText(comment, site),
+      author: getCommentAuthor(comment, site),
       timestamp: Date.now(),
     });
   } else {
-    bookmarkStorage.delete(id);
+    bookmarkData.delete(id);
   }
 
-  // Update toggle button count
+  // Update toggle button count and refresh open panel
+  currentPage = 0;
   updateToggleCount();
+  refreshPanel();
 }
 
 /**
@@ -137,9 +199,27 @@ export function addBookmarkButtons(site: "hackerweb" | "hn"): void {
 
     if (isBookmarked) {
       comment.setAttribute(BOOKMARKED_ATTR, "true");
+
+      // Backfill rich data for legacy bookmarks visible on this page
+      if (!bookmarkData.has(id)) {
+        bookmarkData.set(id, {
+          id,
+          url: `https://news.ycombinator.com/item?id=${id}`,
+          title: getPageTitle(site),
+          text: getCommentText(comment, site),
+          author: getCommentAuthor(comment, site),
+          timestamp: Date.now(),
+        });
+      }
     }
 
-    metadata.appendChild(btn);
+    // Insert after the username so it stays on the same flex line
+    const userEl = qs(sel.author, metadata);
+    if (userEl) {
+      userEl.after(btn);
+    } else {
+      metadata.appendChild(btn);
+    }
   }
 }
 
@@ -175,6 +255,42 @@ export function setupBookmarkHandler(site: "hackerweb" | "hn"): void {
     if (target.classList.contains("hwt-bookmarks-panel-close")) {
       e.preventDefault();
       togglePanel(false);
+    }
+
+    // Check for pagination
+    if (target.classList.contains("hwt-bookmarks-nav-btn")) {
+      e.preventDefault();
+      const dir = target.getAttribute("data-dir");
+      if (dir === "prev") currentPage--;
+      if (dir === "next") currentPage++;
+      refreshPanel();
+    }
+
+    // Check for bookmark removal from panel
+    if (target.classList.contains("hwt-bookmark-item-remove")) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = target.getAttribute("data-id");
+      if (!id) return;
+
+      bookmarkIds.delete(id);
+      bookmarkData.delete(id);
+      updateToggleCount();
+      refreshPanel();
+
+      // Update on-page button if comment is visible
+      for (const comment of qsa(sel.comments)) {
+        if (getCommentId(comment, site) === id) {
+          const btn = qs<HTMLSpanElement>(`.${BOOKMARK_BTN_CLASS}`, comment);
+          if (btn) {
+            btn.classList.remove("bookmarked");
+            btn.textContent = "\u2606";
+            btn.title = "Bookmark this comment";
+          }
+          comment.removeAttribute(BOOKMARKED_ATTR);
+          break;
+        }
+      }
     }
   });
 }
@@ -227,56 +343,135 @@ function togglePanel(show?: boolean): void {
 function createPanel(): HTMLDivElement {
   const panel = document.createElement("div");
   panel.className = PANEL_CLASS;
-  panel.innerHTML = `
-    <div class="hwt-bookmarks-panel-header">
-      <span>Bookmarks</span>
-      <span class="hwt-bookmarks-panel-close">×</span>
-    </div>
-    <div class="hwt-bookmarks-panel-body"></div>
-  `;
+
+  const header = document.createElement("div");
+  header.className = "hwt-bookmarks-panel-header";
+
+  const title = document.createElement("span");
+  title.textContent = "Bookmarks";
+  header.appendChild(title);
+
+  const closeBtn = document.createElement("span");
+  closeBtn.className = "hwt-bookmarks-panel-close";
+  closeBtn.textContent = "\u00d7";
+  header.appendChild(closeBtn);
+
+  const body = document.createElement("div");
+  body.className = "hwt-bookmarks-panel-body";
+
+  panel.appendChild(header);
+  panel.appendChild(body);
   return panel;
 }
 
 /**
- * Update panel content with current bookmarks
+ * Get sorted bookmarks list
+ */
+function getSortedBookmarks(): { id: string; data: Bookmark | undefined }[] {
+  return bookmarkIds
+    .getAll()
+    .map((id) => ({ id, data: bookmarkData.get(id) }))
+    .sort((a, b) => (b.data?.timestamp ?? 0) - (a.data?.timestamp ?? 0));
+}
+
+/**
+ * Update panel content with current bookmarks (paginated)
  */
 function updatePanelContent(panel: Element): void {
   const body = qs(".hwt-bookmarks-panel-body", panel);
   if (!body) return;
 
-  const bookmarks = bookmarkIds.getAll();
+  const sorted = getSortedBookmarks();
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
 
-  if (bookmarks.length === 0) {
-    body.innerHTML = '<div class="hwt-bookmark-item">No bookmarks yet</div>';
+  // Clamp page to valid range
+  if (currentPage >= totalPages) currentPage = totalPages - 1;
+  if (currentPage < 0) currentPage = 0;
+
+  body.innerHTML = "";
+
+  if (sorted.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "hwt-bookmarks-empty";
+    empty.textContent =
+      "No bookmarks yet. Click \u2606 on a comment to save it.";
+    body.appendChild(empty);
     return;
   }
 
-  // Build items safely to prevent XSS from comment content
-  body.innerHTML = "";
-  for (const id of bookmarks) {
-    const bookmark = bookmarkStorage.get(id);
-    const text = bookmark?.text ?? `Comment #${id}`;
+  // Render current page
+  const start = currentPage * PAGE_SIZE;
+  const page = sorted.slice(start, start + PAGE_SIZE);
 
+  for (const { id, data } of page) {
     const item = document.createElement("div");
     item.className = "hwt-bookmark-item";
-    item.setAttribute("data-id", id);
-
-    const textDiv = document.createElement("div");
-    textDiv.className = "hwt-bookmark-item-text";
-    textDiv.textContent = text; // Safe: textContent escapes HTML
-
-    const metaDiv = document.createElement("div");
-    metaDiv.className = "hwt-bookmark-item-meta";
 
     const link = document.createElement("a");
+    link.className = "hwt-bookmark-item-content";
     link.href = `https://news.ycombinator.com/item?id=${id}`;
     link.target = "_blank";
-    link.textContent = "View on HN →";
 
-    metaDiv.appendChild(link);
-    item.appendChild(textDiv);
-    item.appendChild(metaDiv);
+    // Post title
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "hwt-bookmark-item-title";
+    titleDiv.textContent = data?.title ?? `Comment #${id}`;
+    link.appendChild(titleDiv);
+
+    // Author · time ago
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "hwt-bookmark-item-meta";
+    const parts: string[] = [];
+    if (data?.author) parts.push(data.author);
+    if (data?.timestamp) parts.push(timeAgo(data.timestamp));
+    metaDiv.textContent = parts.join(" \u00b7 ");
+    link.appendChild(metaDiv);
+
+    // Comment text preview
+    if (data?.text) {
+      const textDiv = document.createElement("div");
+      textDiv.className = "hwt-bookmark-item-text";
+      textDiv.textContent = data.text;
+      link.appendChild(textDiv);
+    }
+
+    item.appendChild(link);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "hwt-bookmark-item-remove";
+    removeBtn.setAttribute("data-id", id);
+    removeBtn.textContent = "\u00d7";
+    removeBtn.title = "Remove bookmark";
+    item.appendChild(removeBtn);
+
     body.appendChild(item);
+  }
+
+  // Pagination footer (only if more than one page)
+  if (totalPages > 1) {
+    const nav = document.createElement("div");
+    nav.className = "hwt-bookmarks-nav";
+
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "hwt-bookmarks-nav-btn";
+    prevBtn.textContent = "\u2039";
+    prevBtn.disabled = currentPage === 0;
+    prevBtn.setAttribute("data-dir", "prev");
+    nav.appendChild(prevBtn);
+
+    const indicator = document.createElement("span");
+    indicator.className = "hwt-bookmarks-nav-indicator";
+    indicator.textContent = `${currentPage + 1} / ${totalPages}`;
+    nav.appendChild(indicator);
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "hwt-bookmarks-nav-btn";
+    nextBtn.textContent = "\u203a";
+    nextBtn.disabled = currentPage === totalPages - 1;
+    nextBtn.setAttribute("data-dir", "next");
+    nav.appendChild(nextBtn);
+
+    body.appendChild(nav);
   }
 }
 
@@ -288,7 +483,7 @@ export function createToggleButton(): void {
 
   const toggle = document.createElement("button");
   toggle.className = TOGGLE_CLASS;
-  toggle.innerHTML = "☆";
+  toggle.innerHTML = "\u2606";
   toggle.title = "View bookmarks";
 
   document.body.appendChild(toggle);
