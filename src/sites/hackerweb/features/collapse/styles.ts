@@ -17,6 +17,17 @@ section li {
   margin-bottom: 12px !important;
 }
 
+/* Username and timestamp on same row */
+section li > p.metadata {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+}
+
+section li > p.metadata time {
+  margin-left: auto !important;
+}
+
 /* Toggle button - base styles (override HackerWeb defaults) */
 .hwc-toggle.comments-toggle {
   display: inline-flex !important;
