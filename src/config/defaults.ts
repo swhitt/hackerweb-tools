@@ -12,7 +12,7 @@ export const DEFAULT_CONFIG: UserConfig = {
     collapse: true,
     hwebLinks: true,
     opBadge: true,
-    deepLink: true,
+    comfortMode: true,
 
     // OFF by default (experimental or changes behavior significantly)
     keyboardNav: false,
@@ -23,7 +23,7 @@ export const DEFAULT_CONFIG: UserConfig = {
     commentBookmarks: false,
     scoreThreshold: false,
     collapseByDepth: false,
-    comfortMode: false,
+    deepLink: false,
     timeGrouping: false,
     inlinePreview: false,
   },
@@ -34,7 +34,7 @@ export const DEFAULT_CONFIG: UserConfig = {
     gutterClickPx: 15,
     autoCollapseDepth: 5,
     highScoreThreshold: 100,
-    lowScoreThreshold: -5,
+    lowScoreThreshold: 30,
   },
 
   display: {
@@ -60,4 +60,4 @@ export const DEFAULT_CONFIG: UserConfig = {
  * Current config storage version.
  * Increment when making breaking changes to config structure.
  */
-export const CONFIG_VERSION = 2;
+export const CONFIG_VERSION = 3;

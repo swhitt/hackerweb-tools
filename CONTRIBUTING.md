@@ -66,5 +66,6 @@ bun run test:run    # Single run
 - [ ] Code passes `bun run lint` and `bun run format:check`
 - [ ] TypeScript compiles without errors (`bun run typecheck`)
 - [ ] Tests pass (`bun run test:run`)
+- [ ] Production userscript builds (`bun run build`)
 - [ ] Tested manually in browser with Tampermonkey/Violentmonkey
 - [ ] Updated README if adding new features

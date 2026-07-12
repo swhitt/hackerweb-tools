@@ -9,6 +9,7 @@ import { initCollapseDepth } from "./features/collapse-depth";
 import { initDarkMode } from "../shared/dark-mode";
 import { initReadingProgress } from "../shared/reading-progress";
 import { initCommentBookmarks } from "../shared/comment-bookmarks";
+import { initReadability } from "./features/readability";
 
 const SITE = "hackerweb" as const;
 
@@ -30,6 +31,7 @@ export function init(): void {
 
   // Initialize features that only need to run once
   initDarkMode(SITE);
+  initReadability();
   initReadingProgress(SITE);
   initKeyboardNav();
 

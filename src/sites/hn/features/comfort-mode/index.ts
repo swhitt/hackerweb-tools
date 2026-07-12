@@ -4,20 +4,24 @@ import { CSS } from "./styles";
 import { applyComfortMode, removeComfortMode } from "./ui";
 
 const injectStyles = createStyleInjector("hwt-comfort-mode");
+let subscribed = false;
+
+function reconcileComfortMode(): void {
+  if (isFeatureEnabled("comfortMode", "hn")) {
+    applyComfortMode();
+  } else {
+    removeComfortMode();
+  }
+}
 
 export function initComfortMode(): void {
   injectStyles(CSS);
+  reconcileComfortMode();
 
-  if (isFeatureEnabled("comfortMode", "hn")) {
-    applyComfortMode();
-  }
+  if (subscribed) return;
+  subscribed = true;
 
-  // React to config changes
-  getConfigStore().subscribe("features", "comfortMode", (enabled) => {
-    if (enabled) {
-      applyComfortMode();
-    } else {
-      removeComfortMode();
-    }
-  });
+  const store = getConfigStore();
+  store.subscribe("features", "comfortMode", reconcileComfortMode);
+  store.subscribe("sites", "hn", reconcileComfortMode);
 }

@@ -15,7 +15,7 @@ export const CSS = `
 }
 
 /* Subtle highlight for OP's comments */
-li[data-is-op="true"] > p:first-of-type {
+#view-comments section.comments li[data-is-op="true"] > p:first-of-type {
   border-left: 2px solid #ff6600;
   padding-left: 8px;
   margin-left: -10px;

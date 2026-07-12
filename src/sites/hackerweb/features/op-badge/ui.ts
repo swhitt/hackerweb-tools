@@ -6,9 +6,11 @@ const SEL = {
   /** Link to author profile */
   authorLink: 'a[href^="/user/"]',
   /** All comments */
-  comments: "section li",
+  comments: "#view-comments section.comments li",
   /** Comment author link */
   commentAuthor: 'p.metadata a[href^="/user/"]',
+  /** HackerWeb's native original-poster marker */
+  nativeOp: "#view-comments section.comments li p.metadata .user.op",
 } as const;
 
 const OP_BADGE_CLASS = "hwt-op-badge";
@@ -40,18 +42,28 @@ function hasBadge(comment: Element): boolean {
 /**
  * Add OP badge to a comment
  */
-function addBadge(authorLink: HTMLAnchorElement): void {
+function addBadge(authorElement: Element): void {
   const badge = document.createElement("span");
   badge.className = OP_BADGE_CLASS;
   badge.textContent = "OP";
   badge.title = "Original Poster";
-  authorLink.insertAdjacentElement("afterend", badge);
+  authorElement.insertAdjacentElement("afterend", badge);
 }
 
 /**
  * Inject OP badges into comments by the story author
  */
 export function injectOpBadges(): void {
+  // Current HackerWeb already identifies OP authors with `.user.op`. Enhance
+  // that canonical marker instead of adding a duplicate badge.
+  for (const nativeOp of qsa<HTMLElement>(SEL.nativeOp)) {
+    const comment = nativeOp.closest("li");
+    if (!comment) continue;
+
+    comment.setAttribute(OP_DATA_ATTR, "true");
+  }
+
+  // Keep support for older HackerWeb markup that used /user/:name links.
   const storyAuthor = getStoryAuthor();
   if (!storyAuthor) return;
 

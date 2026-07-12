@@ -93,6 +93,23 @@ export function migrateConfig(stored: StoredConfig): StoredConfig {
         break;
       }
 
+      case 2: {
+        // v2 → v3: Scores on HN are non-negative. A stored negative value was
+        // an explicit override (defaults are sparse), so preserve its effective
+        // "do not dim low scores" behavior at the new minimum of zero.
+        const thresholds = config.thresholds as
+          | Record<string, unknown>
+          | undefined;
+        if (
+          thresholds &&
+          typeof thresholds["lowScoreThreshold"] === "number" &&
+          thresholds["lowScoreThreshold"] < 0
+        ) {
+          thresholds["lowScoreThreshold"] = 0;
+        }
+        break;
+      }
+
       default:
         // Unknown version, reset to defaults
         console.warn(

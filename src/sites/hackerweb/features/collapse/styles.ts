@@ -1,33 +1,6 @@
 import { createStyleInjector } from "../../../../utils/style-injector";
-import { getConfigStore } from "../../../../config";
 
 const STYLES = `
-/* Display settings driven by CSS custom properties */
-.view {
-  max-width: var(--hwt-max-width) !important;
-}
-
-section li {
-  font-size: var(--hwt-font-size) !important;
-  line-height: var(--hwt-line-height) !important;
-}
-
-/* More breathing room between comments */
-section li {
-  margin-bottom: 12px !important;
-}
-
-/* Username and timestamp on same row */
-section li > p.metadata {
-  display: flex !important;
-  align-items: baseline !important;
-  gap: 8px !important;
-}
-
-section li > p.metadata time {
-  margin-left: auto !important;
-}
-
 /* Toggle button - base styles (override HackerWeb defaults) */
 .hwc-toggle.comments-toggle {
   display: inline-flex !important;
@@ -40,9 +13,8 @@ section li > p.metadata time {
   padding: 2px 6px !important;
   white-space: nowrap !important;
   color: #828282 !important;
-  background: none !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  border: 1px solid rgba(128, 128, 128, 0.28) !important;
   border-radius: 3px !important;
   cursor: pointer !important;
   transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
@@ -87,36 +59,13 @@ section li > p.metadata time {
 }
 
 /* Ancestor highlight on hover */
-li.hwc-hl {
-  background-color: rgba(255,255,255,0.04) !important;
+#view-comments section.comments li.hwc-hl {
+  box-shadow: inset 2px 0 rgba(255, 102, 0, 0.65) !important;
 }
 `;
 
 const inject = createStyleInjector("hwc-styles");
 
-function syncDisplaySettings() {
-  const store = getConfigStore();
-  const root = document.documentElement;
-  root.style.setProperty(
-    "--hwt-max-width",
-    `${store.get("display", "maxContentWidth")}px`
-  );
-  root.style.setProperty(
-    "--hwt-font-size",
-    `${store.get("display", "fontSize")}px`
-  );
-  root.style.setProperty(
-    "--hwt-line-height",
-    String(store.get("display", "commentLineHeight"))
-  );
-}
-
 export function injectStyles() {
   inject(STYLES);
-  syncDisplaySettings();
-
-  const store = getConfigStore();
-  store.subscribe("display", "maxContentWidth", syncDisplaySettings);
-  store.subscribe("display", "fontSize", syncDisplaySettings);
-  store.subscribe("display", "commentLineHeight", syncDisplaySettings);
 }

@@ -4,7 +4,7 @@ const SEL = {
   storyRow: "tr.athing",
   subtextRow: "tr.athing + tr",
   age: ".age",
-  itemList: "#hnmain table:first-of-type > tbody",
+  itemList: "table.itemlist > tbody",
 } as const;
 
 const GROUP_CLASS = "hwt-time-group";
@@ -63,6 +63,15 @@ function parseAge(ageText: string): number | null {
 }
 
 /**
+ * Parse HN's absolute timestamp fallback into minutes since publication.
+ */
+function parseTimestamp(timestamp: string): number | null {
+  const publishedAt = Date.parse(timestamp);
+  if (Number.isNaN(publishedAt)) return null;
+  return Math.max(0, (Date.now() - publishedAt) / 60_000);
+}
+
+/**
  * Determine which group a story belongs to based on age
  */
 function getTimeGroup(ageMinutes: number): TimeGroup {
@@ -110,9 +119,11 @@ export function addTimeGrouping(): void {
     const ageEl = qs(SEL.age, subtextRow);
     if (!ageEl) continue;
 
-    const ageText = ageEl.getAttribute("title") ?? ageEl.textContent;
-    if (!ageText) continue;
-    const ageMinutes = parseAge(ageText);
+    const visibleAge = ageEl.textContent;
+    const timestamp = ageEl.getAttribute("title");
+    const ageMinutes =
+      (visibleAge ? parseAge(visibleAge) : null) ??
+      (timestamp ? parseTimestamp(timestamp) : null);
 
     if (ageMinutes !== null) {
       stories.push({ row, ageMinutes });

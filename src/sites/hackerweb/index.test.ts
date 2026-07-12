@@ -8,6 +8,10 @@ vi.mock("./features/collapse", () => ({
   initCollapse: vi.fn(),
 }));
 
+vi.mock("./features/readability", () => ({
+  initReadability: vi.fn(),
+}));
+
 describe("hackerweb site init", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -21,6 +25,15 @@ describe("hackerweb site init", () => {
     init();
 
     expect(initCollapse).toHaveBeenCalled();
+  });
+
+  it("initializes baseline comment readability", async () => {
+    const { initReadability } = await import("./features/readability");
+    const { init } = await import("./index");
+
+    init();
+
+    expect(initReadability).toHaveBeenCalledOnce();
   });
 
   it("sets up debounced observer for dynamic content", async () => {

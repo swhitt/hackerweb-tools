@@ -13,7 +13,7 @@ export default defineConfig({
         author: "Steve Whittaker",
         license: "MIT",
         description:
-          "Enhancements for Hacker News and HackerWeb: collapsible comments, quick navigation links",
+          "A power layer for Hacker News and HackerWeb: faster threads, focused reading, keyboard navigation, and saved comments",
         match: ["https://hackerweb.app/*", "https://news.ycombinator.com/*"],
         icon: "https://news.ycombinator.com/favicon.ico",
         updateURL: updateUrl,

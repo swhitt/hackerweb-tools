@@ -168,7 +168,7 @@ html.hwt-dark .titleline[data-site] .sitestr {
 }
 
 /* Time grouping */
-html.hwt-dark .hwt-time-group {
+html.hwt-dark .hwt-time-group > td {
   background: #30303a;
   color: #747478;
   border-left-color: #ff6600;

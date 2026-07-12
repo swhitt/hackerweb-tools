@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Comment timestamp displays on same row as username
-
 ### Added
 
+- Searchable Settings panel with enabled-feature summary
+- Responsive full-screen settings sheet for small screens
+- Dialog semantics, focus trapping, labelled controls, and live announcements
+- Explicit saved/reload state for page-level feature changes
 - Font size and line height display settings
 - Bookmarks panel stores post title, author, and comment preview
 - Bookmarks panel pagination (5 per page)
@@ -27,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Settings are grouped accurately by HackerWeb, Hacker News, and shared scope
+- Settings features and counts are scoped to the current site/origin
+- Comfort mode is enabled by default on Hacker News; copy-comment links are
+  disabled by default on HackerWeb, keeping four default-enabled features
+- HackerWeb readability and thread-rail styles are scoped to the active comments
+  view
+- Settings use a new warm-paper and graphite visual system
+- Public feature documentation and userscript metadata reflect the full product
+- Comment timestamp displays on same row as username
 - Display settings (max width, font size, line height) use number inputs
 - Display settings apply reactively via CSS custom properties
 - Bookmarks panel restyled to match settings panel, with dark mode
@@ -42,6 +51,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Time grouping now handles current Hacker News timestamps without breaking table layout
+- Time grouping targets the real HN item list and stays themed in dark mode
+- Low story-score highlighting uses a reachable default threshold
+- Explicit negative score preferences migrate without unexpectedly enabling dimming
+- The HackerWeb story-link toggle now enables and disables its injected links live
+- OP badges enhance HackerWeb's current native original-poster marker
+- Closed settings are inert and restore focus and page overflow correctly
+- Release dry-runs now execute every validation gate and report truthfully
+- Publishing rejects all dirty-tree states and pushes only the intended branch/tag
+- Publishing preflights branch synchronization, tag availability, GitHub auth, and gist ownership
+- CI uses the repository's pinned Bun version and frozen lockfile
+- Pre-commit lint and format jobs no longer race while rewriting staged files
 - Dark mode text illegible in settings panel inputs
 - Bookmark data lost on page reload (now persisted to localStorage)
 

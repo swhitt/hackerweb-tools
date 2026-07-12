@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { injectStoryLinks, injectCommentPageLink } from "./ui";
+import { injectStoryLinks, injectCommentPageLink, removeItemLinks } from "./ui";
 
 describe("injectStoryLinks", () => {
   beforeEach(() => {
@@ -61,6 +61,16 @@ describe("injectStoryLinks", () => {
 
     const links = document.querySelectorAll(".hn-links-hweb");
     expect(links.length).toBe(3);
+  });
+
+  it("removes injected links when the feature is disabled", () => {
+    createStoryRow("111");
+    createStoryRow("222");
+    injectStoryLinks();
+
+    removeItemLinks();
+
+    expect(document.querySelectorAll(".hn-links-hweb")).toHaveLength(0);
   });
 
   it("skips rows without subtext", () => {

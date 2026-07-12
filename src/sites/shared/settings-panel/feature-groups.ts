@@ -5,30 +5,46 @@ import type { Features, Thresholds, Display } from "../../../config/types";
  */
 export interface FeatureGroup {
   label: string;
+  description: string;
+  scope: string;
   features: (keyof Features)[];
 }
 
 export const FEATURE_GROUPS: Record<string, FeatureGroup> = {
-  core: {
-    label: "Core",
-    features: ["collapse", "keyboardNav", "opBadge", "deepLink"],
+  shared: {
+    label: "Available here",
+    description: "Shared tools configured separately on each site.",
+    scope: "This site",
+    features: [
+      "keyboardNav",
+      "darkModeSync",
+      "readingProgress",
+      "commentBookmarks",
+    ],
   },
-  reading: {
-    label: "Reading",
-    features: ["newCommentHighlight", "readingProgress", "commentBookmarks"],
+  hackerweb: {
+    label: "HackerWeb",
+    description: "Thread controls and context for focused discussions.",
+    scope: "hackerweb.app",
+    features: [
+      "collapse",
+      "opBadge",
+      "deepLink",
+      "newCommentHighlight",
+      "collapseByDepth",
+    ],
   },
-  visual: {
-    label: "Visual",
-    features: ["darkModeSync", "comfortMode", "collapseByDepth"],
-  },
-  hnSpecific: {
-    label: "HN Features",
+  hn: {
+    label: "Hacker News",
+    description: "Better scanning, filtering, and story discovery.",
+    scope: "news.ycombinator.com",
     features: [
       "hideReadStories",
       "scoreThreshold",
       "timeGrouping",
       "inlinePreview",
       "hwebLinks",
+      "comfortMode",
     ],
   },
 };
@@ -46,15 +62,15 @@ export const FEATURE_LABELS: Record<
   },
   keyboardNav: {
     label: "Keyboard nav",
-    description: "j/k to navigate, o to open links",
+    description: "Use vim-style shortcuts for stories and comments",
   },
   opBadge: {
     label: "OP badge",
     description: "Highlight comments by the original poster",
   },
   deepLink: {
-    label: "Deep linking",
-    description: "URL updates when viewing comments",
+    label: "Copy comment links",
+    description: "Click a timestamp to copy its HN permalink",
   },
   newCommentHighlight: {
     label: "New comment highlight",
@@ -85,20 +101,20 @@ export const FEATURE_LABELS: Record<
     description: "Hide stories you've already viewed",
   },
   scoreThreshold: {
-    label: "Score threshold",
-    description: "Dim low-scoring comments",
+    label: "Story score signals",
+    description: "Emphasize standout scores and dim quieter stories",
   },
   timeGrouping: {
     label: "Time grouping",
     description: "Group stories by time period",
   },
   inlinePreview: {
-    label: "Inline preview",
-    description: "Preview links without leaving the page",
+    label: "Story favicons",
+    description: "Show site favicons beside stories via Google",
   },
   hwebLinks: {
-    label: "HackerWeb links",
-    description: "Add links to view on HackerWeb",
+    label: "HackerWeb story links",
+    description: "Add a HackerWeb shortcut to each story",
   },
 };
 
@@ -127,8 +143,9 @@ export const THRESHOLD_LABELS: Record<
   },
   lowScoreThreshold: {
     label: "Low score threshold",
-    min: -100,
-    max: 0,
+    min: 0,
+    max: 100,
+    step: 5,
   },
   minScore: {
     label: "Minimum score",

@@ -1,6 +1,6 @@
-import { getConfigStore, STORAGE_KEY } from "../../../config";
+import { getConfigStore } from "../../../config";
 import { fullVersion } from "../../../../config";
-import type { Thresholds, Display } from "../../../config/types";
+import type { Thresholds, Display, Features } from "../../../config/types";
 import {
   FEATURE_GROUPS,
   FEATURE_LABELS,
@@ -11,10 +11,21 @@ import {
 
 let panelElement: HTMLDivElement | null = null;
 let overlayElement: HTMLDivElement | null = null;
+let gearElement: HTMLButtonElement | null = null;
+let searchElement: HTMLInputElement | null = null;
+let activeCountElement: HTMLSpanElement | null = null;
+let searchStatusElement: HTMLSpanElement | null = null;
+let liveRegionElement: HTMLDivElement | null = null;
+let reloadNoticeElement: HTMLDivElement | null = null;
+let previouslyFocusedElement: HTMLElement | null = null;
+let previousBodyOverflow = "";
 let isOpen = false;
+let controlId = 0;
 
 // Animation duration in ms (must match CSS animation: hwt-pulse 0.4s)
 const PULSE_ANIMATION_MS = 400;
+const PANEL_ID = "hwt-settings-panel";
+const PANEL_TITLE_ID = "hwt-settings-title";
 
 // Note: These SVG strings are hardcoded constants and must never accept external input
 const GEAR_ICON = `<svg viewBox="0 0 24 24" fill="currentColor">
@@ -25,18 +36,20 @@ const CLOSE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
   <path d="M18 6L6 18M6 6l12 12"/>
 </svg>`;
 
-/**
- * Check if this is a first-time user (no config in localStorage)
- */
-function isFirstTimeUser(): boolean {
-  return localStorage.getItem(STORAGE_KEY) === null;
-}
+const SEARCH_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <circle cx="11" cy="11" r="7"/>
+  <path d="m20 20-3.5-3.5"/>
+</svg>`;
 
 /**
  * Check if dark mode is active (only when the feature has applied it)
  */
 function isDarkMode(): boolean {
   return document.documentElement.classList.contains("hwt-dark");
+}
+
+function getSiteName(): "hackerweb" | "hn" {
+  return location.hostname === "hackerweb.app" ? "hackerweb" : "hn";
 }
 
 /**
@@ -68,6 +81,7 @@ function createSection(
 ): HTMLDivElement {
   const section = document.createElement("div");
   section.className = "hwt-settings-section";
+  section.dataset["hwtSearch"] = title.toLowerCase();
 
   const titleEl = document.createElement("h3");
   titleEl.className = "hwt-settings-section-title";
@@ -86,16 +100,46 @@ function createSection(
  */
 function createGroup(
   title: string | null,
-  rows: HTMLElement[]
+  rows: HTMLElement[],
+  description?: string,
+  scope?: string
 ): HTMLDivElement {
   const group = document.createElement("div");
   group.className = "hwt-settings-group";
+  group.dataset["hwtSearch"] = [title, description, scope]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
   if (title) {
+    const groupHeader = document.createElement("div");
+    groupHeader.className = "hwt-settings-group-header";
+
+    const groupHeading = document.createElement("div");
+    groupHeading.className = "hwt-settings-group-heading";
+
     const groupTitle = document.createElement("h4");
     groupTitle.className = "hwt-settings-group-title";
     groupTitle.textContent = title;
-    group.appendChild(groupTitle);
+    groupHeading.appendChild(groupTitle);
+
+    if (description) {
+      const groupDescription = document.createElement("p");
+      groupDescription.className = "hwt-settings-group-description";
+      groupDescription.textContent = description;
+      groupHeading.appendChild(groupDescription);
+    }
+
+    groupHeader.appendChild(groupHeading);
+
+    if (scope) {
+      const scopeBadge = document.createElement("span");
+      scopeBadge.className = "hwt-settings-scope";
+      scopeBadge.textContent = scope;
+      groupHeader.appendChild(scopeBadge);
+    }
+
+    group.appendChild(groupHeader);
   }
 
   for (const row of rows) {
@@ -105,15 +149,119 @@ function createGroup(
   return group;
 }
 
+function getCurrentFeatureKeys(): (keyof Features)[] {
+  const shared = FEATURE_GROUPS["shared"]?.features ?? [];
+  const current = FEATURE_GROUPS[getSiteName()]?.features ?? [];
+  return [...shared, ...current];
+}
+
+function getFeatureCount(): { active: number; total: number } {
+  const store = getConfigStore();
+  const keys = getCurrentFeatureKeys();
+  return {
+    active: keys.filter((key) => store.get("features", key)).length,
+    total: keys.length,
+  };
+}
+
+function updateActiveCount(): void {
+  const { active, total } = getFeatureCount();
+  const text = `${active} / ${total} enabled`;
+  if (activeCountElement) activeCountElement.textContent = text;
+}
+
+function announce(message: string): void {
+  if (!liveRegionElement) return;
+  liveRegionElement.textContent = "";
+  requestAnimationFrame(() => {
+    if (liveRegionElement) liveRegionElement.textContent = message;
+  });
+}
+
+function markReloadRequired(settingName: string): void {
+  if (reloadNoticeElement) reloadNoticeElement.hidden = false;
+  announce(`${settingName} saved. Reload to fully apply this change.`);
+}
+
+function createNoResults(): HTMLDivElement {
+  const empty = document.createElement("div");
+  empty.className = "hwt-settings-empty";
+  empty.hidden = true;
+
+  const title = document.createElement("p");
+  title.className = "hwt-settings-empty-title";
+  title.textContent = "No settings found";
+  empty.appendChild(title);
+
+  const description = document.createElement("p");
+  description.className = "hwt-settings-empty-description";
+  description.textContent = "Try a feature, site, or display term.";
+  empty.appendChild(description);
+  return empty;
+}
+
+function filterPanelContent(container: HTMLElement, query: string): void {
+  const term = query.trim().toLowerCase();
+  let visibleRows = 0;
+
+  for (const section of container.querySelectorAll<HTMLElement>(
+    ".hwt-settings-section"
+  )) {
+    const sectionMatches =
+      section.dataset["hwtSearch"]?.includes(term) ?? false;
+    let sectionHasMatch = false;
+
+    for (const group of section.querySelectorAll<HTMLElement>(
+      ".hwt-settings-group"
+    )) {
+      const groupMatches = group.dataset["hwtSearch"]?.includes(term) ?? false;
+      let groupHasMatch = false;
+
+      for (const row of group.querySelectorAll<HTMLElement>(
+        ".hwt-settings-row"
+      )) {
+        const rowMatches = row.dataset["hwtSearch"]?.includes(term) ?? false;
+        const matches =
+          term.length === 0 || sectionMatches || groupMatches || rowMatches;
+        row.hidden = !matches;
+        if (matches) {
+          visibleRows++;
+          groupHasMatch = true;
+        }
+      }
+
+      group.hidden = !groupHasMatch;
+      sectionHasMatch ||= groupHasMatch;
+    }
+
+    section.hidden = !sectionHasMatch;
+  }
+
+  const empty = container.querySelector<HTMLElement>(".hwt-settings-empty");
+  if (empty) empty.hidden = term.length === 0 || visibleRows > 0;
+
+  if (searchStatusElement) {
+    searchStatusElement.textContent =
+      term.length === 0
+        ? ""
+        : `${visibleRows} ${visibleRows === 1 ? "match" : "matches"}`;
+  }
+}
+
 /**
  * Rebuild the panel content with all settings sections
  */
 function rebuildPanelContent(container: HTMLElement): void {
   container.innerHTML = "";
-  container.appendChild(createSitesSection());
   container.appendChild(createFeaturesSection());
+  if (getSiteName() === "hackerweb") {
+    container.appendChild(createDisplaySection());
+  }
   container.appendChild(createThresholdsSection());
-  container.appendChild(createDisplaySection());
+  container.appendChild(createSitesSection());
+  container.appendChild(createNoResults());
+  updateActiveCount();
+  filterPanelContent(container, searchElement?.value ?? "");
 }
 
 // ============================================================================
@@ -126,10 +274,16 @@ function rebuildPanelContent(container: HTMLElement): void {
 export function createGearButton(): HTMLButtonElement {
   const button = document.createElement("button");
   button.className = "hwt-settings-gear";
-  button.innerHTML = GEAR_ICON;
+  button.dataset["hwtSite"] = getSiteName();
+  button.type = "button";
+  button.innerHTML = `<span class="hwt-settings-gear-icon">${GEAR_ICON}</span><span class="hwt-settings-gear-label">Tools</span><kbd>,</kbd>`;
   button.setAttribute("aria-label", "Open settings");
+  button.setAttribute("aria-controls", PANEL_ID);
+  button.setAttribute("aria-expanded", "false");
+  button.title = "Open HackerWeb Tools (,)";
   button.addEventListener("click", () => togglePanel());
   document.body.appendChild(button);
+  gearElement = button;
   return button;
 }
 
@@ -139,6 +293,8 @@ export function createGearButton(): HTMLButtonElement {
 export function createOverlay(): HTMLDivElement {
   const overlay = document.createElement("div");
   overlay.className = "hwt-settings-overlay";
+  overlay.dataset["hwtSite"] = getSiteName();
+  overlay.setAttribute("aria-hidden", "true");
   overlay.addEventListener("click", () => togglePanel(false));
   document.body.appendChild(overlay);
   overlayElement = overlay;
@@ -150,6 +306,9 @@ export function createOverlay(): HTMLDivElement {
  */
 function createToggle(
   checked: boolean,
+  inputId: string,
+  labelledBy: string,
+  describedBy: string | undefined,
   onChange: (checked: boolean) => void
 ): HTMLLabelElement {
   const label = document.createElement("label");
@@ -157,7 +316,11 @@ function createToggle(
 
   const input = document.createElement("input");
   input.type = "checkbox";
+  input.id = inputId;
   input.checked = checked;
+  input.setAttribute("role", "switch");
+  input.setAttribute("aria-labelledby", labelledBy);
+  if (describedBy) input.setAttribute("aria-describedby", describedBy);
 
   const track = document.createElement("span");
   track.className = "hwt-toggle-track";
@@ -168,6 +331,8 @@ function createToggle(
 
   input.addEventListener("change", () => {
     onChange(input.checked);
+    const settingName = document.getElementById(labelledBy)?.textContent;
+    if (settingName) markReloadRequired(settingName);
     label.classList.add("hwt-pulse");
     setTimeout(() => label.classList.remove("hwt-pulse"), PULSE_ANIMATION_MS);
   });
@@ -188,22 +353,30 @@ function createToggleRow(
 ): HTMLDivElement {
   const row = document.createElement("div");
   row.className = "hwt-settings-row";
+  row.dataset["hwtSearch"] = `${label} ${description}`.toLowerCase();
+
+  const id = `hwt-setting-${++controlId}`;
+  const labelId = `${id}-label`;
+  const descriptionId = `${id}-description`;
 
   const info = document.createElement("div");
   info.className = "hwt-settings-row-info";
 
-  const labelEl = document.createElement("p");
+  const labelEl = document.createElement("label");
   labelEl.className = "hwt-settings-row-label";
+  labelEl.id = labelId;
+  labelEl.htmlFor = id;
   labelEl.textContent = label;
 
   const descEl = document.createElement("p");
   descEl.className = "hwt-settings-row-description";
+  descEl.id = descriptionId;
   descEl.textContent = description;
 
   info.appendChild(labelEl);
   info.appendChild(descEl);
   row.appendChild(info);
-  row.appendChild(createToggle(checked, onChange));
+  row.appendChild(createToggle(checked, id, labelId, descriptionId, onChange));
 
   return row;
 }
@@ -216,10 +389,13 @@ function createNumberInput(
   min: number,
   max: number,
   step: number,
+  inputId: string,
+  settingName: string,
   onChange: (value: number) => void
 ): HTMLInputElement {
   const input = document.createElement("input");
   input.type = "number";
+  input.id = inputId;
   input.className = "hwt-number-input";
   input.value = String(value);
   input.min = String(min);
@@ -230,6 +406,7 @@ function createNumberInput(
     const newValue = Math.min(max, Math.max(min, Number(input.value)));
     input.value = String(newValue);
     onChange(newValue);
+    markReloadRequired(settingName);
   });
 
   return input;
@@ -248,17 +425,23 @@ function createNumberRow(
 ): HTMLDivElement {
   const row = document.createElement("div");
   row.className = "hwt-settings-row";
+  row.dataset["hwtSearch"] = label.toLowerCase();
+
+  const id = `hwt-setting-${++controlId}`;
 
   const info = document.createElement("div");
   info.className = "hwt-settings-row-info";
 
-  const labelEl = document.createElement("p");
+  const labelEl = document.createElement("label");
   labelEl.className = "hwt-settings-row-label";
+  labelEl.htmlFor = id;
   labelEl.textContent = label;
 
   info.appendChild(labelEl);
   row.appendChild(info);
-  row.appendChild(createNumberInput(value, min, max, step, onChange));
+  row.appendChild(
+    createNumberInput(value, min, max, step, id, label, onChange)
+  );
 
   return row;
 }
@@ -268,15 +451,19 @@ function createNumberRow(
  */
 function createTextInput(
   value: string,
+  inputId: string,
+  settingName: string,
   onChange: (value: string) => void
 ): HTMLInputElement {
   const input = document.createElement("input");
   input.type = "text";
+  input.id = inputId;
   input.className = "hwt-text-input";
   input.value = value;
 
   input.addEventListener("change", () => {
     onChange(input.value);
+    markReloadRequired(settingName);
   });
 
   return input;
@@ -287,15 +474,19 @@ function createTextInput(
  */
 function createColorInput(
   value: string,
+  inputId: string,
+  settingName: string,
   onChange: (value: string) => void
 ): HTMLInputElement {
   const input = document.createElement("input");
   input.type = "color";
+  input.id = inputId;
   input.className = "hwt-color-input";
   input.value = value;
 
   input.addEventListener("change", () => {
     onChange(input.value);
+    markReloadRequired(settingName);
   });
 
   return input;
@@ -312,12 +503,16 @@ function createDisplayRow(
 ): HTMLDivElement {
   const row = document.createElement("div");
   row.className = "hwt-settings-row";
+  row.dataset["hwtSearch"] = label.toLowerCase();
+
+  const id = `hwt-setting-${++controlId}`;
 
   const info = document.createElement("div");
   info.className = "hwt-settings-row-info";
 
-  const labelEl = document.createElement("p");
+  const labelEl = document.createElement("label");
   labelEl.className = "hwt-settings-row-label";
+  labelEl.htmlFor = id;
   labelEl.textContent = label;
 
   info.appendChild(labelEl);
@@ -325,8 +520,8 @@ function createDisplayRow(
 
   const input =
     type === "color"
-      ? createColorInput(value, onChange)
-      : createTextInput(value, onChange);
+      ? createColorInput(value, id, label, onChange)
+      : createTextInput(value, id, label, onChange);
   row.appendChild(input);
 
   return row;
@@ -342,30 +537,23 @@ function createDisplayRow(
 function createSitesSection(): HTMLDivElement {
   const configStore = getConfigStore();
 
-  return createSection("Sites", () => {
-    const hwebRow = createToggleRow(
-      "HackerWeb",
-      "hackerweb.app",
-      configStore.get("sites", "hackerweb").enabled,
+  return createSection("This site", () => {
+    const site = getSiteName();
+    const siteLabel = site === "hackerweb" ? "HackerWeb" : "Hacker News";
+    const siteHost =
+      site === "hackerweb" ? "hackerweb.app" : "news.ycombinator.com";
+    const row = createToggleRow(
+      `${siteLabel} enhancements`,
+      `Apply configured tools on ${siteHost}`,
+      configStore.get("sites", site).enabled,
       (checked) => {
-        const current = configStore.get("sites", "hackerweb");
-        configStore.set("sites", "hackerweb", { ...current, enabled: checked });
+        const current = configStore.get("sites", site);
+        configStore.set("sites", site, { ...current, enabled: checked });
       }
     );
-    hwebRow.classList.add("hwt-site-toggle");
+    row.classList.add("hwt-site-toggle");
 
-    const hnRow = createToggleRow(
-      "Hacker News",
-      "news.ycombinator.com",
-      configStore.get("sites", "hn").enabled,
-      (checked) => {
-        const current = configStore.get("sites", "hn");
-        configStore.set("sites", "hn", { ...current, enabled: checked });
-      }
-    );
-    hnRow.classList.add("hwt-site-toggle");
-
-    return [createGroup(null, [hwebRow, hnRow])];
+    return [createGroup(null, [row])];
   });
 }
 
@@ -378,7 +566,10 @@ function createFeaturesSection(): HTMLDivElement {
   return createSection("Features", () => {
     const groups: HTMLElement[] = [];
 
-    for (const groupInfo of Object.values(FEATURE_GROUPS)) {
+    const groupKeys = ["shared", getSiteName()];
+    for (const groupKey of groupKeys) {
+      const groupInfo = FEATURE_GROUPS[groupKey];
+      if (!groupInfo) continue;
       const rows: HTMLElement[] = [];
 
       for (const featureKey of groupInfo.features) {
@@ -395,7 +586,14 @@ function createFeaturesSection(): HTMLDivElement {
         );
       }
 
-      groups.push(createGroup(groupInfo.label, rows));
+      groups.push(
+        createGroup(
+          groupInfo.label,
+          rows,
+          groupInfo.description,
+          groupInfo.scope
+        )
+      );
     }
 
     return groups;
@@ -408,26 +606,56 @@ function createFeaturesSection(): HTMLDivElement {
 function createThresholdsSection(): HTMLDivElement {
   const configStore = getConfigStore();
 
-  return createSection("Thresholds", () => {
-    const rows: HTMLElement[] = [];
+  return createSection("Tuning", () => {
+    const threadRows: HTMLElement[] = [];
+    const scoreRows: HTMLElement[] = [];
+    const keys: (keyof Thresholds)[] = [
+      "autoCollapseDepth",
+      "gutterClickPx",
+      "highScoreThreshold",
+      "lowScoreThreshold",
+    ];
 
-    for (const [key, info] of Object.entries(THRESHOLD_LABELS)) {
-      const thresholdKey = key as keyof Thresholds;
-      rows.push(
-        createNumberRow(
-          info.label,
-          configStore.get("thresholds", thresholdKey),
-          info.min,
-          info.max,
-          info.step ?? 1,
-          (value) => {
-            configStore.set("thresholds", thresholdKey, value);
-          }
-        )
+    for (const thresholdKey of keys) {
+      const info = THRESHOLD_LABELS[thresholdKey];
+      const row = createNumberRow(
+        info.label,
+        configStore.get("thresholds", thresholdKey),
+        info.min,
+        info.max,
+        info.step ?? 1,
+        (value) => {
+          configStore.set("thresholds", thresholdKey, value);
+        }
       );
+
+      if (
+        thresholdKey === "autoCollapseDepth" ||
+        thresholdKey === "gutterClickPx"
+      ) {
+        threadRows.push(row);
+      } else {
+        scoreRows.push(row);
+      }
     }
 
-    return [createGroup(null, rows)];
+    return getSiteName() === "hackerweb"
+      ? [
+          createGroup(
+            "Thread controls",
+            threadRows,
+            "Fine-tune collapsing behavior.",
+            "HackerWeb"
+          ),
+        ]
+      : [
+          createGroup(
+            "Score signals",
+            scoreRows,
+            "Choose which story scores stand out or fade back.",
+            "Hacker News"
+          ),
+        ];
   });
 }
 
@@ -437,13 +665,16 @@ function createThresholdsSection(): HTMLDivElement {
 function createDisplaySection(): HTMLDivElement {
   const configStore = getConfigStore();
 
-  return createSection("Display", () => {
+  return createSection("Appearance", () => {
     const rows: HTMLElement[] = [];
+    const keys: (keyof Display)[] = [
+      "maxContentWidth",
+      "fontSize",
+      "commentLineHeight",
+    ];
 
-    for (const [key, info] of Object.entries(DISPLAY_LABELS) as [
-      keyof Display,
-      DisplayLabelInfo,
-    ][]) {
+    for (const key of keys) {
+      const info: DisplayLabelInfo = DISPLAY_LABELS[key];
       if (info.type === "number") {
         rows.push(
           createNumberRow(
@@ -471,68 +702,15 @@ function createDisplaySection(): HTMLDivElement {
       }
     }
 
-    return [createGroup(null, rows)];
+    return [
+      createGroup(
+        "Reading layout",
+        rows,
+        "Adjust the HackerWeb discussion column.",
+        "HackerWeb"
+      ),
+    ];
   });
-}
-
-/**
- * Create the welcome state for first-time users
- */
-function createWelcome(onExplore: () => void): HTMLDivElement {
-  const welcome = document.createElement("div");
-  welcome.className = "hwt-welcome";
-
-  const icon = document.createElement("div");
-  icon.className = "hwt-welcome-icon";
-  icon.innerHTML = GEAR_ICON;
-  welcome.appendChild(icon);
-
-  const title = document.createElement("h2");
-  title.className = "hwt-welcome-title";
-  title.textContent = "Welcome to HackerWeb Tools";
-  welcome.appendChild(title);
-
-  const desc = document.createElement("p");
-  desc.className = "hwt-welcome-desc";
-  desc.textContent =
-    "Enhance your Hacker News experience with collapsible threads, keyboard navigation, and more.";
-  welcome.appendChild(desc);
-
-  const shortcuts = document.createElement("div");
-  shortcuts.className = "hwt-welcome-shortcuts";
-
-  const shortcutItems = [
-    { key: "j / k", desc: "Navigate comments" },
-    { key: "o", desc: "Open link" },
-    { key: ",", desc: "Settings" },
-  ];
-
-  for (const item of shortcutItems) {
-    const shortcut = document.createElement("div");
-    shortcut.className = "hwt-welcome-shortcut";
-
-    const key = document.createElement("span");
-    key.className = "hwt-welcome-shortcut-key";
-    key.textContent = item.key;
-
-    const shortcutDesc = document.createElement("span");
-    shortcutDesc.className = "hwt-welcome-shortcut-desc";
-    shortcutDesc.textContent = item.desc;
-
-    shortcut.appendChild(shortcutDesc);
-    shortcut.appendChild(key);
-    shortcuts.appendChild(shortcut);
-  }
-
-  welcome.appendChild(shortcuts);
-
-  const exploreBtn = document.createElement("button");
-  exploreBtn.className = "hwt-explore-btn";
-  exploreBtn.textContent = "Explore Settings";
-  exploreBtn.addEventListener("click", onExplore);
-  welcome.appendChild(exploreBtn);
-
-  return welcome;
 }
 
 // ============================================================================
@@ -548,6 +726,13 @@ export function createPanel(): HTMLDivElement {
 
   const panel = document.createElement("div");
   panel.className = "hwt-settings-panel";
+  panel.dataset["hwtSite"] = getSiteName();
+  panel.id = PANEL_ID;
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", PANEL_TITLE_ID);
+  panel.setAttribute("aria-hidden", "true");
+  panel.inert = true;
 
   if (isDarkMode()) {
     panel.classList.add("hwt-dark");
@@ -560,13 +745,39 @@ export function createPanel(): HTMLDivElement {
   const header = document.createElement("div");
   header.className = "hwt-settings-header";
 
+  const brand = document.createElement("div");
+  brand.className = "hwt-settings-brand";
+
+  const brandMark = document.createElement("span");
+  brandMark.className = "hwt-settings-brand-mark";
+  brandMark.textContent = "HWT";
+  brandMark.setAttribute("aria-hidden", "true");
+  brand.appendChild(brandMark);
+
+  const titleGroup = document.createElement("div");
+  titleGroup.className = "hwt-settings-title-group";
+
   const title = document.createElement("h2");
   title.className = "hwt-settings-title";
+  title.id = PANEL_TITLE_ID;
   title.textContent = "HackerWeb Tools";
-  header.appendChild(title);
+  titleGroup.appendChild(title);
+
+  const subtitle = document.createElement("p");
+  subtitle.className = "hwt-settings-subtitle";
+
+  activeCountElement = document.createElement("span");
+  activeCountElement.className = "hwt-settings-active-count";
+  subtitle.appendChild(activeCountElement);
+  subtitle.append(` · ${location.hostname}`);
+  titleGroup.appendChild(subtitle);
+
+  brand.appendChild(titleGroup);
+  header.appendChild(brand);
 
   const closeBtn = document.createElement("button");
   closeBtn.className = "hwt-settings-close";
+  closeBtn.type = "button";
   closeBtn.innerHTML = CLOSE_ICON;
   closeBtn.setAttribute("aria-label", "Close settings");
   closeBtn.addEventListener("click", () => togglePanel(false));
@@ -574,19 +785,71 @@ export function createPanel(): HTMLDivElement {
 
   panel.appendChild(header);
 
+  // Search
+  const searchBar = document.createElement("div");
+  searchBar.className = "hwt-settings-search-bar";
+
+  const searchLabel = document.createElement("label");
+  searchLabel.className = "hwt-sr-only";
+  searchLabel.htmlFor = "hwt-settings-search";
+  searchLabel.textContent = "Search settings";
+  searchBar.appendChild(searchLabel);
+
+  const searchShell = document.createElement("div");
+  searchShell.className = "hwt-settings-search";
+
+  const searchIcon = document.createElement("span");
+  searchIcon.className = "hwt-settings-search-icon";
+  searchIcon.innerHTML = SEARCH_ICON;
+  searchShell.appendChild(searchIcon);
+
+  const search = document.createElement("input");
+  search.type = "search";
+  search.id = "hwt-settings-search";
+  search.placeholder = "Search features and controls";
+  search.autocomplete = "off";
+  search.setAttribute("aria-describedby", "hwt-settings-search-status");
+  searchShell.appendChild(search);
+
+  const searchKey = document.createElement("kbd");
+  searchKey.textContent = "/";
+  searchShell.appendChild(searchKey);
+  searchBar.appendChild(searchShell);
+
+  searchStatusElement = document.createElement("span");
+  searchStatusElement.className = "hwt-settings-search-status";
+  searchStatusElement.id = "hwt-settings-search-status";
+  searchStatusElement.setAttribute("aria-live", "polite");
+  searchBar.appendChild(searchStatusElement);
+  panel.appendChild(searchBar);
+
+  // Some features inject page-level DOM/listeners and need a reload to fully
+  // reconcile when disabled. Keep that state explicit instead of implying an
+  // immediate unmount.
+  const reloadNotice = document.createElement("div");
+  reloadNotice.className = "hwt-settings-reload";
+  reloadNotice.hidden = true;
+
+  const reloadCopy = document.createElement("span");
+  reloadCopy.textContent = "Saved. Reload to fully apply page changes.";
+  reloadNotice.appendChild(reloadCopy);
+
+  const reloadButton = document.createElement("button");
+  reloadButton.type = "button";
+  reloadButton.textContent = "Reload";
+  reloadButton.addEventListener("click", () => location.reload());
+  reloadNotice.appendChild(reloadButton);
+  panel.appendChild(reloadNotice);
+  reloadNoticeElement = reloadNotice;
+
   // Content
   const content = document.createElement("div");
   content.className = "hwt-settings-content";
-
-  if (isFirstTimeUser()) {
-    const welcomeEl = createWelcome(() => {
-      rebuildPanelContent(content);
-    });
-    content.appendChild(welcomeEl);
-  } else {
-    rebuildPanelContent(content);
-  }
-
+  searchElement = search;
+  search.addEventListener("input", () => {
+    filterPanelContent(content, search.value);
+  });
+  rebuildPanelContent(content);
   panel.appendChild(content);
 
   // Footer
@@ -595,24 +858,34 @@ export function createPanel(): HTMLDivElement {
 
   const resetBtn = document.createElement("button");
   resetBtn.className = "hwt-reset-btn";
-  resetBtn.textContent = "Reset All";
+  resetBtn.type = "button";
+  resetBtn.textContent = "Reset defaults";
   resetBtn.addEventListener("click", () => {
     if (confirm("Reset all settings to defaults?")) {
       getConfigStore().resetAll();
       rebuildPanelContent(content);
+      markReloadRequired("Defaults");
     }
   });
   footer.appendChild(resetBtn);
 
   const version = document.createElement("span");
   version.className = "hwt-version";
-  version.textContent = `v${fullVersion}`;
+  version.textContent = `HWT v${fullVersion}`;
   footer.appendChild(version);
 
   panel.appendChild(footer);
 
+  liveRegionElement = document.createElement("div");
+  liveRegionElement.className = "hwt-sr-only";
+  liveRegionElement.setAttribute("role", "status");
+  liveRegionElement.setAttribute("aria-live", "polite");
+  panel.appendChild(liveRegionElement);
+
   document.body.appendChild(panel);
   panelElement = panel;
+  getConfigStore().subscribeSection("features", updateActiveCount);
+  updateActiveCount();
   return panel;
 }
 
@@ -628,20 +901,86 @@ export function togglePanel(show?: boolean): void {
 
   if (panelElement) {
     panelElement.classList.toggle("hwt-visible", isOpen);
+    panelElement.inert = !isOpen;
+    panelElement.setAttribute("aria-hidden", String(!isOpen));
   }
 
   if (overlayElement) {
     overlayElement.classList.toggle("hwt-visible", isOpen);
+    overlayElement.setAttribute("aria-hidden", String(!isOpen));
   }
 
-  document.body.style.overflow = isOpen ? "hidden" : "";
+  gearElement?.setAttribute("aria-expanded", String(isOpen));
 
-  if (isOpen && panelElement) {
-    const closeBtn = panelElement.querySelector<HTMLButtonElement>(
-      ".hwt-settings-close"
-    );
-    closeBtn?.focus();
+  if (isOpen) {
+    const activeElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    previouslyFocusedElement =
+      activeElement && activeElement !== document.body
+        ? activeElement
+        : gearElement;
+    previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    searchElement?.focus();
+    searchElement?.select();
+  } else {
+    document.body.style.overflow = previousBodyOverflow;
+    const focusTarget =
+      previouslyFocusedElement?.isConnected === true
+        ? previouslyFocusedElement
+        : gearElement;
+    focusTarget?.focus();
+    previouslyFocusedElement = null;
   }
+}
+
+function getFocusableElements(): HTMLElement[] {
+  if (!panelElement) return [];
+  const selector = [
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "a[href]",
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(",");
+
+  return Array.from(
+    panelElement.querySelectorAll<HTMLElement>(selector)
+  ).filter((element) => !element.closest("[hidden]"));
+}
+
+function trapFocus(event: KeyboardEvent): void {
+  const focusable = getFocusableElements();
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (!first || !last) return;
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  } else if (!panelElement?.contains(document.activeElement)) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target instanceof HTMLTextAreaElement || target.isContentEditable) {
+    return true;
+  }
+  if (target instanceof HTMLSelectElement) return true;
+  if (!(target instanceof HTMLInputElement)) return false;
+
+  return ["text", "search", "email", "url", "tel", "password"].includes(
+    target.type
+  );
 }
 
 /**
@@ -656,18 +995,24 @@ export function registerKeyboardShortcuts(): () => void {
       return;
     }
 
+    if (e.key === "Tab" && isOpen) {
+      trapFocus(e);
+      return;
+    }
+
     // Don't process other shortcuts when in input fields
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === "INPUT" ||
-      target.tagName === "TEXTAREA" ||
-      target.isContentEditable
-    ) {
+    const target = e.target;
+    if (isTextEntryTarget(target)) return;
+
+    // Slash jumps to search while the panel is open
+    if (e.key === "/" && isOpen) {
+      e.preventDefault();
+      searchElement?.focus();
       return;
     }
 
     // Comma toggles panel
-    if (e.key === ",") {
+    if (e.key === "," && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
       togglePanel();
     }

@@ -36,3 +36,10 @@ export function injectCommentPageLink(): void {
   const subtext = row && getSubtext(row);
   if (itemId && subtext) injectLink(subtext, itemId);
 }
+
+/** Remove every HackerWeb shortcut injected by this feature. */
+export function removeItemLinks(): void {
+  for (const link of document.querySelectorAll(`.${LINK_CLASS}`)) {
+    link.remove();
+  }
+}
