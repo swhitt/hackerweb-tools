@@ -145,10 +145,51 @@ describe("settings panel", () => {
     expect(getConfigStore().get("features", "keyboardNav")).toBe(true);
     expect(
       panel.querySelector(".hwt-settings-active-count")?.textContent
-    ).toContain("3 / 10 enabled");
+    ).toContain("4 / 9 enabled");
     expect(
       panel.querySelector<HTMLElement>(".hwt-settings-reload")?.hidden
     ).toBe(false);
+  });
+
+  it("keeps Saved inside the one Tools drawer", async () => {
+    const { createPanel } = await loadSettingsPanel();
+    const panel = createPanel();
+    const savedTab = Array.from(
+      panel.querySelectorAll<HTMLButtonElement>(".hwt-settings-tab")
+    ).find((button) => button.textContent.startsWith("Saved"));
+
+    expect(savedTab).not.toBeUndefined();
+    if (!savedTab) return;
+    savedTab.click();
+
+    expect(panel.querySelector(".hwt-saved-view")).not.toBeNull();
+    expect(panel.textContent).toContain("Nothing saved yet");
+    expect(document.querySelector(".hwt-bookmarks-toggle")).toBeNull();
+  });
+
+  it("defaults to dark and remembers a theme override", async () => {
+    const { createPanel, getConfigStore } = await loadSettingsPanel();
+    const panel = createPanel();
+    const theme = panel.querySelector<HTMLSelectElement>(".hwt-select-input");
+
+    expect(theme?.value).toBe("dark");
+    if (!theme) return;
+    theme.value = "light";
+    theme.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(getConfigStore().get("display", "themeMode")).toBe("light");
+  });
+
+  it("keeps the drawer theme synchronized with the page", async () => {
+    document.documentElement.classList.add("hwt-dark");
+    const { createPanel } = await loadSettingsPanel();
+    document.documentElement.classList.add("hwt-dark");
+    const panel = createPanel();
+    expect(panel.classList.contains("hwt-dark")).toBe(true);
+
+    document.documentElement.classList.remove("hwt-dark");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(panel.classList.contains("hwt-dark")).toBe(false);
   });
 
   it("supports comma, slash, Escape, and focus trapping", async () => {

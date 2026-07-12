@@ -110,6 +110,19 @@ export function migrateConfig(stored: StoredConfig): StoredConfig {
         break;
       }
 
+      case 3: {
+        // v3 → v4: Replace the dark-mode boolean with a remembered theme.
+        // Preserve explicit behavior; untouched installs receive the new dark
+        // default through the sparse-config merge.
+        const features = config.features as Record<string, unknown> | undefined;
+        const display = (config.display ??= {}) as Record<string, unknown>;
+        if (features && typeof features["darkModeSync"] === "boolean") {
+          display["themeMode"] = features["darkModeSync"] ? "system" : "light";
+          Reflect.deleteProperty(features, "darkModeSync");
+        }
+        break;
+      }
+
       default:
         // Unknown version, reset to defaults
         console.warn(

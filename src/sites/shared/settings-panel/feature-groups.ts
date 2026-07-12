@@ -15,12 +15,7 @@ export const FEATURE_GROUPS: Record<string, FeatureGroup> = {
     label: "Available here",
     description: "Shared tools configured separately on each site.",
     scope: "This site",
-    features: [
-      "keyboardNav",
-      "darkModeSync",
-      "readingProgress",
-      "commentBookmarks",
-    ],
+    features: ["keyboardNav", "readingProgress", "commentBookmarks"],
   },
   hackerweb: {
     label: "HackerWeb",
@@ -81,8 +76,8 @@ export const FEATURE_LABELS: Record<
     description: "Show progress bar while scrolling",
   },
   commentBookmarks: {
-    label: "Comment bookmarks",
-    description: "Save comments for later reading",
+    label: "Save stories & comments",
+    description: "Add save buttons and keep items in the Saved view",
   },
   darkModeSync: {
     label: "Dark mode sync",
@@ -166,7 +161,10 @@ export type DisplayLabelInfo =
   | { label: string; type: "text" | "color" }
   | { label: string; type: "number"; min: number; max: number; step?: number };
 
-export const DISPLAY_LABELS: Record<keyof Display, DisplayLabelInfo> = {
+export const DISPLAY_LABELS: Record<
+  Exclude<keyof Display, "themeMode">,
+  DisplayLabelInfo
+> = {
   maxContentWidth: {
     label: "Max content width (px)",
     type: "number",

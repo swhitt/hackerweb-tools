@@ -181,14 +181,6 @@ export const CSS = `
   color-scheme: dark;
 }
 
-/* HackerWeb's legacy dark theme inverts the whole document. Reverse that
-   inversion only for our own UI; HN's native scoped dark colors are untouched. */
-html.hwt-dark .hwt-settings-panel[data-hwt-site="hackerweb"],
-html.hwt-dark .hwt-settings-overlay[data-hwt-site="hackerweb"],
-html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
-  filter: invert(1) hue-rotate(180deg);
-}
-
 /* Header */
 .hwt-settings-header {
   position: relative;
@@ -303,6 +295,43 @@ html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
   width: 19px;
   height: 19px;
   stroke: currentColor;
+}
+
+/* Primary views */
+.hwt-settings-tabs {
+  flex: 0 0 auto;
+  min-height: 45px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--hwt-border);
+  background: var(--hwt-bg);
+  display: flex;
+  align-items: end;
+  gap: 18px;
+}
+
+.hwt-settings-tab {
+  align-self: stretch;
+  padding: 2px 1px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--hwt-text-soft);
+  cursor: pointer;
+  font: 700 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.hwt-settings-tab:hover {
+  color: var(--hwt-text);
+}
+
+.hwt-settings-tab.hwt-active {
+  border-bottom-color: var(--hwt-accent);
+  color: var(--hwt-text);
+}
+
+.hwt-settings-tab:focus-visible {
+  outline: 2px solid var(--hwt-focus);
+  outline-offset: 2px;
 }
 
 /* Search */
@@ -651,7 +680,8 @@ html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
 /* Inputs */
 .hwt-number-input,
 .hwt-text-input,
-.hwt-color-input {
+.hwt-color-input,
+.hwt-select-input {
   flex: 0 0 auto;
   height: 36px;
   border: 1px solid var(--hwt-border-strong);
@@ -682,9 +712,15 @@ html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
   cursor: pointer;
 }
 
+.hwt-select-input {
+  min-width: 104px;
+  padding: 0 8px;
+}
+
 .hwt-number-input:focus,
 .hwt-text-input:focus,
-.hwt-color-input:focus-visible {
+.hwt-color-input:focus-visible,
+.hwt-select-input:focus-visible {
   border-color: var(--hwt-accent);
   outline: 0;
   background: var(--hwt-surface);
@@ -732,6 +768,187 @@ html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
   margin: 4px 0 0;
   color: var(--hwt-text-soft);
   font-size: 12px;
+}
+
+/* Saved */
+.hwt-settings-content.hwt-showing-saved {
+  padding-top: 16px;
+}
+
+.hwt-saved-view {
+  color: var(--hwt-text);
+}
+
+.hwt-saved-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 125px;
+  gap: 8px;
+}
+
+.hwt-saved-search,
+.hwt-saved-filter,
+.hwt-saved-sort,
+.hwt-saved-action,
+.hwt-saved-load-more {
+  min-height: 40px;
+  border: 1px solid var(--hwt-border-strong);
+  border-radius: 8px;
+  background: var(--hwt-surface);
+  color: var(--hwt-text);
+  font: 600 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.hwt-saved-search {
+  min-width: 0;
+  padding: 0 11px;
+}
+
+.hwt-saved-filter,
+.hwt-saved-sort {
+  padding: 0 8px;
+}
+
+.hwt-saved-search:focus,
+.hwt-saved-filter:focus,
+.hwt-saved-sort:focus,
+.hwt-saved-action:focus-visible,
+.hwt-saved-load-more:focus-visible,
+.hwt-saved-remove:focus-visible,
+.hwt-saved-source:focus-visible {
+  border-color: var(--hwt-focus);
+  outline: 2px solid color-mix(in srgb, var(--hwt-focus) 26%, transparent);
+  outline-offset: 1px;
+}
+
+.hwt-saved-action {
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.hwt-saved-action:hover,
+.hwt-saved-load-more:hover {
+  border-color: var(--hwt-accent);
+  color: var(--hwt-accent-strong);
+}
+
+.hwt-saved-import {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hwt-saved-import-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hwt-saved-summary,
+.hwt-saved-import-status {
+  margin: 10px 2px 0;
+  color: var(--hwt-text-muted);
+  font-size: 11px;
+}
+
+.hwt-saved-import-status:empty {
+  display: none;
+}
+
+.hwt-saved-list {
+  margin-top: 10px;
+  border: 1px solid var(--hwt-border);
+  background: var(--hwt-surface);
+}
+
+.hwt-saved-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 10px;
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--hwt-border);
+}
+
+.hwt-saved-item:last-child {
+  border-bottom: 0;
+}
+
+.hwt-saved-item-content {
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hwt-saved-item-content:hover .hwt-saved-item-title {
+  color: var(--hwt-accent-strong);
+}
+
+.hwt-saved-item-title {
+  margin: 0;
+  color: var(--hwt-text);
+  font-size: 13px;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.hwt-saved-item-meta,
+.hwt-saved-item-preview {
+  margin: 4px 0 0;
+  color: var(--hwt-text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hwt-saved-item-preview {
+  color: var(--hwt-text-soft);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.hwt-saved-source,
+.hwt-saved-remove {
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--hwt-text-muted);
+  cursor: pointer;
+  font: 650 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-decoration: none;
+}
+
+.hwt-saved-source:hover {
+  color: var(--hwt-accent-strong);
+}
+
+.hwt-saved-remove:hover {
+  color: #b42318;
+}
+
+.hwt-saved-source {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hwt-saved-remove {
+  grid-column: 2;
+}
+
+.hwt-saved-empty {
+  padding: 36px 18px;
+  color: var(--hwt-text-muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+.hwt-saved-load-more {
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
 }
 
 /* Footer */
@@ -793,6 +1010,7 @@ html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
   }
 
   .hwt-settings-search-bar,
+  .hwt-settings-tabs,
   .hwt-settings-reload,
   .hwt-settings-content,
   .hwt-settings-footer {
@@ -819,6 +1037,27 @@ html.hwt-dark .hwt-settings-gear[data-hwt-site="hackerweb"] {
 
   .hwt-settings-scope {
     max-width: 108px;
+  }
+
+  .hwt-saved-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hwt-saved-search {
+    grid-column: 1 / -1;
+  }
+
+  .hwt-saved-action {
+    min-height: 44px;
+  }
+
+  .hwt-saved-item {
+    padding: 13px 10px;
+  }
+
+  .hwt-saved-remove,
+  .hwt-saved-source {
+    min-height: 44px;
   }
 }
 

@@ -40,11 +40,14 @@ export interface Thresholds {
  * Display/styling configuration
  */
 export interface Display {
+  themeMode: "dark" | "light" | "system";
   maxContentWidth: number;
   fontSize: number;
   commentLineHeight: number;
   newCommentColor: string;
 }
+
+export type ThemeMode = Display["themeMode"];
 
 /**
  * Per-site configuration overrides

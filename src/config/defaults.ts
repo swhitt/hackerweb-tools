@@ -13,14 +13,14 @@ export const DEFAULT_CONFIG: UserConfig = {
     hwebLinks: true,
     opBadge: true,
     comfortMode: true,
+    commentBookmarks: true,
+    darkModeSync: true,
 
     // OFF by default (experimental or changes behavior significantly)
     keyboardNav: false,
     newCommentHighlight: false,
     hideReadStories: false,
-    darkModeSync: false,
     readingProgress: false,
-    commentBookmarks: false,
     scoreThreshold: false,
     collapseByDepth: false,
     deepLink: false,
@@ -38,6 +38,7 @@ export const DEFAULT_CONFIG: UserConfig = {
   },
 
   display: {
+    themeMode: "dark",
     maxContentWidth: 900,
     fontSize: 16,
     commentLineHeight: 1.6,
@@ -60,4 +61,4 @@ export const DEFAULT_CONFIG: UserConfig = {
  * Current config storage version.
  * Increment when making breaking changes to config structure.
  */
-export const CONFIG_VERSION = 3;
+export const CONFIG_VERSION = 4;

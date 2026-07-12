@@ -1,14 +1,78 @@
 export const CSS_HACKERWEB = `
 /* Dark Mode - HackerWeb */
 html.hwt-dark {
-  filter: invert(1) hue-rotate(180deg);
+  background: #151517;
+  color-scheme: dark;
 }
 
-/* Don't invert images and videos */
-html.hwt-dark img,
-html.hwt-dark video,
-html.hwt-dark iframe {
-  filter: invert(1) hue-rotate(180deg);
+html.hwt-dark body,
+html.hwt-dark .view,
+html.hwt-dark .view.shaded {
+  background: #151517 !important;
+  color: #d4d4d8 !important;
+}
+
+html.hwt-dark .view > header,
+html.hwt-dark .post-content,
+html.hwt-dark #hwlist > li,
+html.hwt-dark section.comments > ul > li,
+html.hwt-dark .grouped-tableview,
+html.hwt-dark .tableview {
+  background: #202023 !important;
+  border-color: #38383d !important;
+}
+
+html.hwt-dark #hwlist > li,
+html.hwt-dark section.comments li,
+html.hwt-dark .grouped-tableview > li,
+html.hwt-dark .tableview > li {
+  border-color: #38383d !important;
+}
+
+html.hwt-dark .story,
+html.hwt-dark .post-content p,
+html.hwt-dark section.comments li > p:not(.metadata),
+html.hwt-dark h1,
+html.hwt-dark h2,
+html.hwt-dark h3 {
+  color: #e4e4e7 !important;
+}
+
+html.hwt-dark a {
+  color: #78b7df;
+}
+
+html.hwt-dark .metadata,
+html.hwt-dark .metadata a,
+html.hwt-dark .link-text,
+html.hwt-dark time,
+html.hwt-dark .number {
+  color: #92929a !important;
+}
+
+html.hwt-dark .user,
+html.hwt-dark .user a {
+  color: #ff6b72 !important;
+}
+
+html.hwt-dark input,
+html.hwt-dark select,
+html.hwt-dark textarea,
+html.hwt-dark button:not(.hwt-settings-gear) {
+  border-color: #4a4a50;
+}
+
+html.hwt-dark pre,
+html.hwt-dark code {
+  background: #19191b;
+  color: #d4d4d8;
+}
+
+html.hwt-dark .hwt-kb-help,
+html.hwt-dark .hwt-toast {
+  border: 1px solid #4a4a50;
+  background: #202023;
+  color: #f4f4f5;
 }
 `;
 
@@ -185,21 +249,6 @@ html.hwt-dark tr.athing.hwt-kb-focus + tr {
   background: rgba(255, 102, 0, 0.06);
 }
 
-/* Bookmarks */
-html.hwt-dark .hwt-bookmarks-panel {
-  background: #27272a;
-  border-color: #3a3a3f;
-}
-html.hwt-dark .hwt-bookmark-item {
-  border-color: #3a3a3f;
-}
-html.hwt-dark .hwt-bookmark-item:hover {
-  background: #30303a;
-}
-html.hwt-dark .hwt-bookmark-item-text {
-  color: #e4e4e7;
-}
-
 /* Hide-read toggle */
 html.hwt-dark .hwt-hide-read-toggle {
   color: #747478;
@@ -210,6 +259,6 @@ html.hwt-dark .hwt-hide-read-toggle.active {
 
 /* Reading progress bar */
 html.hwt-dark .hwt-progress-bar-fill {
-  background: linear-gradient(90deg, #ff6600, #ff8533);
+  background: #ff6600;
 }
 `;

@@ -16,6 +16,12 @@ export function syncThemeClass(
   darkClass: string,
   lightClass?: string
 ): () => void {
+  if (typeof window.matchMedia !== "function") {
+    document.documentElement.classList.remove(darkClass);
+    if (lightClass) document.documentElement.classList.add(lightClass);
+    return () => undefined;
+  }
+
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
   const apply = (isDark: boolean) => {

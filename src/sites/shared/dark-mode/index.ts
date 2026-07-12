@@ -1,5 +1,6 @@
 import { createStyleInjector } from "../../../utils/style-injector";
-import { isFeatureEnabled, getConfigStore } from "../../../config";
+import { getConfigStore } from "../../../config";
+import type { ThemeMode } from "../../../config";
 import { syncThemeClass } from "../../../utils/theme-detector";
 import { CSS_HACKERWEB, CSS_HN } from "./styles";
 
@@ -9,9 +10,16 @@ const injectHackerwebStyles = createStyleInjector("hwt-dark-mode-hackerweb");
 const injectHnStyles = createStyleInjector("hwt-dark-mode-hn");
 
 let cleanup: (() => void) | null = null;
+let activeSite: "hackerweb" | "hn" | null = null;
+let subscribed = false;
+let appliedMode: ThemeMode | null = null;
+let appliedSite: "hackerweb" | "hn" | null = null;
 
-function enableDarkMode(site: "hackerweb" | "hn"): void {
-  if (cleanup) return;
+function applyTheme(site: "hackerweb" | "hn", mode: ThemeMode): void {
+  if (appliedSite === site && appliedMode === mode) return;
+
+  cleanup?.();
+  cleanup = null;
 
   if (site === "hackerweb") {
     injectHackerwebStyles(CSS_HACKERWEB);
@@ -19,7 +27,13 @@ function enableDarkMode(site: "hackerweb" | "hn"): void {
     injectHnStyles(CSS_HN);
   }
 
-  cleanup = syncThemeClass(DARK_CLASS);
+  if (mode === "system") {
+    cleanup = syncThemeClass(DARK_CLASS);
+  } else {
+    document.documentElement.classList.toggle(DARK_CLASS, mode === "dark");
+  }
+  appliedSite = site;
+  appliedMode = mode;
 }
 
 function disableDarkMode(): void {
@@ -28,19 +42,27 @@ function disableDarkMode(): void {
     cleanup = null;
   }
   document.documentElement.classList.remove(DARK_CLASS);
+  appliedSite = null;
+  appliedMode = null;
 }
 
 export function initDarkMode(site: "hackerweb" | "hn"): void {
-  if (isFeatureEnabled("darkModeSync", site)) {
-    enableDarkMode(site);
+  activeSite = site;
+  reconcileDarkMode();
+
+  if (subscribed) return;
+  subscribed = true;
+
+  const store = getConfigStore();
+  store.subscribe("display", "themeMode", reconcileDarkMode);
+  store.subscribe("sites", site, reconcileDarkMode);
+}
+
+function reconcileDarkMode(): void {
+  if (!activeSite || !getConfigStore().get("sites", activeSite).enabled) {
+    disableDarkMode();
+    return;
   }
 
-  // React to config changes for live toggle
-  getConfigStore().subscribe("features", "darkModeSync", (enabled) => {
-    if (enabled) {
-      enableDarkMode(site);
-    } else {
-      disableDarkMode();
-    }
-  });
+  applyTheme(activeSite, getConfigStore().get("display", "themeMode"));
 }

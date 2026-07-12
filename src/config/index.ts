@@ -15,6 +15,7 @@ export type {
   Features,
   Thresholds,
   Display,
+  ThemeMode,
   Sites,
   SiteConfig,
   StoredConfig,

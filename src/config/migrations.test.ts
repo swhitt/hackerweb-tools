@@ -11,7 +11,7 @@ describe("config migrations", () => {
 
     const migrated = migrateConfig(stored);
 
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.config.thresholds?.lowScoreThreshold).toBe(0);
   });
 
@@ -37,9 +37,24 @@ describe("config migrations", () => {
 
     const migrated = migrateConfig(stored);
 
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.config.display?.maxContentWidth).toBe(1200);
     expect(migrated.config.display?.commentLineHeight).toBe(1.8);
     expect(migrated.config.thresholds?.lowScoreThreshold).toBe(0);
+  });
+
+  it("remembers an explicit dark-mode override as a theme", () => {
+    const dark: StoredConfig = {
+      version: 3,
+      config: { features: { darkModeSync: true } },
+    };
+    const light: StoredConfig = {
+      version: 3,
+      config: { features: { darkModeSync: false } },
+    };
+
+    expect(migrateConfig(dark).config.display?.themeMode).toBe("system");
+    expect(migrateConfig(light).config.display?.themeMode).toBe("light");
+    expect(migrateConfig(dark).config.features?.darkModeSync).toBeUndefined();
   });
 });

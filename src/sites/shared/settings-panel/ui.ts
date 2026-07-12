@@ -1,6 +1,11 @@
 import { getConfigStore } from "../../../config";
 import { fullVersion } from "../../../../config";
-import type { Thresholds, Display, Features } from "../../../config/types";
+import type {
+  Thresholds,
+  Display,
+  Features,
+  ThemeMode,
+} from "../../../config/types";
 import {
   FEATURE_GROUPS,
   FEATURE_LABELS,
@@ -8,6 +13,11 @@ import {
   DISPLAY_LABELS,
   type DisplayLabelInfo,
 } from "./feature-groups";
+import {
+  createSavedView,
+  getSavedCount,
+  SAVED_CHANGE_EVENT,
+} from "../comment-bookmarks";
 
 let panelElement: HTMLDivElement | null = null;
 let overlayElement: HTMLDivElement | null = null;
@@ -17,9 +27,16 @@ let activeCountElement: HTMLSpanElement | null = null;
 let searchStatusElement: HTMLSpanElement | null = null;
 let liveRegionElement: HTMLDivElement | null = null;
 let reloadNoticeElement: HTMLDivElement | null = null;
+let searchBarElement: HTMLDivElement | null = null;
+let contentElement: HTMLDivElement | null = null;
+let footerElement: HTMLDivElement | null = null;
+let settingsTabElement: HTMLButtonElement | null = null;
+let savedTabElement: HTMLButtonElement | null = null;
 let previouslyFocusedElement: HTMLElement | null = null;
 let previousBodyOverflow = "";
 let isOpen = false;
+let reloadRequired = false;
+let activeView: "settings" | "saved" = "settings";
 let controlId = 0;
 
 // Animation duration in ms (must match CSS animation: hwt-pulse 0.4s)
@@ -179,8 +196,44 @@ function announce(message: string): void {
 }
 
 function markReloadRequired(settingName: string): void {
-  if (reloadNoticeElement) reloadNoticeElement.hidden = false;
+  reloadRequired = true;
+  if (reloadNoticeElement && activeView === "settings") {
+    reloadNoticeElement.hidden = false;
+  }
   announce(`${settingName} saved. Reload to fully apply this change.`);
+}
+
+function updateSavedTabCount(): void {
+  if (!savedTabElement) return;
+  const count = getSavedCount();
+  savedTabElement.textContent = count > 0 ? `Saved (${count})` : "Saved";
+}
+
+function setPanelView(view: "settings" | "saved"): void {
+  activeView = view;
+  settingsTabElement?.setAttribute(
+    "aria-selected",
+    String(view === "settings")
+  );
+  savedTabElement?.setAttribute("aria-selected", String(view === "saved"));
+  settingsTabElement?.classList.toggle("hwt-active", view === "settings");
+  savedTabElement?.classList.toggle("hwt-active", view === "saved");
+
+  if (searchBarElement) searchBarElement.hidden = view !== "settings";
+  if (reloadNoticeElement) {
+    reloadNoticeElement.hidden = view !== "settings" || !reloadRequired;
+  }
+  if (footerElement) footerElement.hidden = view !== "settings";
+
+  if (!contentElement) return;
+  if (view === "saved") {
+    contentElement.replaceChildren(createSavedView());
+    contentElement.classList.add("hwt-showing-saved");
+    updateSavedTabCount();
+  } else {
+    contentElement.classList.remove("hwt-showing-saved");
+    rebuildPanelContent(contentElement);
+  }
 }
 
 function createNoResults(): HTMLDivElement {
@@ -253,6 +306,7 @@ function filterPanelContent(container: HTMLElement, query: string): void {
  */
 function rebuildPanelContent(container: HTMLElement): void {
   container.innerHTML = "";
+  container.appendChild(createThemeSection());
   container.appendChild(createFeaturesSection());
   if (getSiteName() === "hackerweb") {
     container.appendChild(createDisplaySection());
@@ -446,6 +500,51 @@ function createNumberRow(
   return row;
 }
 
+function createSelectRow<T extends string>(
+  label: string,
+  description: string,
+  value: T,
+  options: readonly { value: T; label: string }[],
+  onChange: (value: T) => void
+): HTMLDivElement {
+  const row = document.createElement("div");
+  row.className = "hwt-settings-row";
+  row.dataset["hwtSearch"] = `${label} ${description}`.toLowerCase();
+
+  const id = `hwt-setting-${++controlId}`;
+  const info = document.createElement("div");
+  info.className = "hwt-settings-row-info";
+
+  const labelElement = document.createElement("label");
+  labelElement.className = "hwt-settings-row-label";
+  labelElement.htmlFor = id;
+  labelElement.textContent = label;
+  info.appendChild(labelElement);
+
+  const descriptionElement = document.createElement("p");
+  descriptionElement.className = "hwt-settings-row-description";
+  descriptionElement.textContent = description;
+  info.appendChild(descriptionElement);
+
+  const select = document.createElement("select");
+  select.id = id;
+  select.className = "hwt-select-input";
+  for (const optionInfo of options) {
+    const option = document.createElement("option");
+    option.value = optionInfo.value;
+    option.textContent = optionInfo.label;
+    select.appendChild(option);
+  }
+  select.value = value;
+  select.addEventListener("change", () => {
+    onChange(select.value as T);
+    announce(`${label} saved.`);
+  });
+
+  row.append(info, select);
+  return row;
+}
+
 /**
  * Create a text input for string settings
  */
@@ -530,6 +629,32 @@ function createDisplayRow(
 // ============================================================================
 // Section Builders
 // ============================================================================
+
+function createThemeSection(): HTMLDivElement {
+  const store = getConfigStore();
+  const themeOptions: readonly { value: ThemeMode; label: string }[] = [
+    { value: "dark", label: "Dark" },
+    { value: "system", label: "System" },
+    { value: "light", label: "Light" },
+  ];
+
+  return createSection("Appearance", () => [
+    createGroup(
+      "Theme",
+      [
+        createSelectRow(
+          "Color theme",
+          "Dark is the default; overrides are remembered",
+          store.get("display", "themeMode"),
+          themeOptions,
+          (value) => store.set("display", "themeMode", value)
+        ),
+      ],
+      "Choose dark, light, or follow the operating system.",
+      "Both sites"
+    ),
+  ]);
+}
 
 /**
  * Create the Sites section
@@ -665,9 +790,9 @@ function createThresholdsSection(): HTMLDivElement {
 function createDisplaySection(): HTMLDivElement {
   const configStore = getConfigStore();
 
-  return createSection("Appearance", () => {
+  return createSection("Reading layout", () => {
     const rows: HTMLElement[] = [];
-    const keys: (keyof Display)[] = [
+    const keys: Exclude<keyof Display, "themeMode">[] = [
       "maxContentWidth",
       "fontSize",
       "commentLineHeight",
@@ -785,6 +910,32 @@ export function createPanel(): HTMLDivElement {
 
   panel.appendChild(header);
 
+  const viewTabs = document.createElement("div");
+  viewTabs.className = "hwt-settings-tabs";
+  viewTabs.setAttribute("role", "tablist");
+  viewTabs.setAttribute("aria-label", "HackerWeb Tools views");
+
+  const settingsTab = document.createElement("button");
+  settingsTab.type = "button";
+  settingsTab.className = "hwt-settings-tab hwt-active";
+  settingsTab.textContent = "Settings";
+  settingsTab.setAttribute("role", "tab");
+  settingsTab.setAttribute("aria-selected", "true");
+  settingsTab.addEventListener("click", () => setPanelView("settings"));
+  viewTabs.appendChild(settingsTab);
+  settingsTabElement = settingsTab;
+
+  const savedTab = document.createElement("button");
+  savedTab.type = "button";
+  savedTab.className = "hwt-settings-tab";
+  savedTab.setAttribute("role", "tab");
+  savedTab.setAttribute("aria-selected", "false");
+  savedTab.addEventListener("click", () => setPanelView("saved"));
+  viewTabs.appendChild(savedTab);
+  savedTabElement = savedTab;
+  updateSavedTabCount();
+  panel.appendChild(viewTabs);
+
   // Search
   const searchBar = document.createElement("div");
   searchBar.className = "hwt-settings-search-bar";
@@ -822,6 +973,7 @@ export function createPanel(): HTMLDivElement {
   searchStatusElement.setAttribute("aria-live", "polite");
   searchBar.appendChild(searchStatusElement);
   panel.appendChild(searchBar);
+  searchBarElement = searchBar;
 
   // Some features inject page-level DOM/listeners and need a reload to fully
   // reconcile when disabled. Keep that state explicit instead of implying an
@@ -851,6 +1003,7 @@ export function createPanel(): HTMLDivElement {
   });
   rebuildPanelContent(content);
   panel.appendChild(content);
+  contentElement = content;
 
   // Footer
   const footer = document.createElement("div");
@@ -875,6 +1028,7 @@ export function createPanel(): HTMLDivElement {
   footer.appendChild(version);
 
   panel.appendChild(footer);
+  footerElement = footer;
 
   liveRegionElement = document.createElement("div");
   liveRegionElement.className = "hwt-sr-only";
@@ -885,6 +1039,7 @@ export function createPanel(): HTMLDivElement {
   document.body.appendChild(panel);
   panelElement = panel;
   getConfigStore().subscribeSection("features", updateActiveCount);
+  window.addEventListener(SAVED_CHANGE_EVENT, updateSavedTabCount);
   updateActiveCount();
   return panel;
 }
@@ -923,8 +1078,12 @@ export function togglePanel(show?: boolean): void {
         : gearElement;
     previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    searchElement?.focus();
-    searchElement?.select();
+    if (activeView === "settings") {
+      searchElement?.focus();
+      searchElement?.select();
+    } else {
+      panelElement?.querySelector<HTMLElement>(".hwt-saved-search")?.focus();
+    }
   } else {
     document.body.style.overflow = previousBodyOverflow;
     const focusTarget =
