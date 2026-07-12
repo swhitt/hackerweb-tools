@@ -16,6 +16,10 @@ export const CSS = `
   display: none;
 }
 
+html.hwt-dark .hwt-favicon {
+  background: #35353a;
+}
+
 /* Domain badge - uniform subtle style for all sites */
 .titleline .sitestr {
   background: rgba(0, 0, 0, 0.05);

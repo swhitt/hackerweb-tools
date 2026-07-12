@@ -1,7 +1,7 @@
 import { qsa, qs, getEventTargetElement } from "../../../../utils/dom-helpers";
 
 const SEL = {
-  comments: "section li",
+  comments: "#view-comments section.comments li",
   timeLink: 'p.metadata time a[href*="item?id="]',
 } as const;
 
@@ -13,7 +13,7 @@ const TOAST_CLASS = "hwt-toast";
  */
 function getItemId(link: HTMLAnchorElement): string | null {
   const href = link.getAttribute("href");
-  const match = href?.match(/item\?id=(\d+)/);
+  const match = /item\?id=(\d+)/.exec(href ?? "");
   return match?.[1] ?? null;
 }
 
@@ -27,6 +27,8 @@ function showToast(message: string): void {
   const toast = document.createElement("div");
   toast.className = TOAST_CLASS;
   toast.textContent = message;
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
   document.body.appendChild(toast);
 
   // Remove after animation completes

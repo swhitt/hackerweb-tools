@@ -31,7 +31,7 @@ function updateProgressBar(): void {
   if (!progressFill) return;
 
   const progress = calculateProgress();
-  progressFill.style.width = `${progress}%`;
+  progressFill.style.transform = `scaleX(${progress / 100})`;
 }
 
 /**
@@ -55,6 +55,7 @@ export function createProgressBar(): void {
 
   progressBar = document.createElement("div");
   progressBar.className = PROGRESS_BAR_CLASS;
+  progressBar.setAttribute("aria-hidden", "true");
 
   progressFill = document.createElement("div");
   progressFill.className = PROGRESS_FILL_CLASS;

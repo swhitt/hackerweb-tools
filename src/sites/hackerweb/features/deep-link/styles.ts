@@ -12,7 +12,7 @@ export const CSS = `
 /* Toast notification for copy confirmation */
 .hwt-toast {
   position: fixed;
-  bottom: 20px;
+  bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));
   left: 50%;
   transform: translateX(-50%);
   background: #333;
@@ -22,6 +22,12 @@ export const CSS = `
   font-size: 14px;
   z-index: 10000;
   animation: hwt-toast-fade 2s ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hwt-toast {
+    animation: none;
+  }
 }
 
 @keyframes hwt-toast-fade {
