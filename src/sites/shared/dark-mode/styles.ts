@@ -12,6 +12,13 @@ html.hwt-dark .view.shaded {
   color: #d4d4d8 !important;
 }
 
+html.hwt-dark .scroll,
+html.hwt-dark section.comments,
+html.hwt-dark section.comments > ul {
+  background: #151517 !important;
+  border-color: #38383d !important;
+}
+
 html.hwt-dark .view > header,
 html.hwt-dark .post-content,
 html.hwt-dark #hwlist > li,
