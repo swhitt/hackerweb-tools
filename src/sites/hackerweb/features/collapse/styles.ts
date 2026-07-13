@@ -2,7 +2,7 @@ import { createStyleInjector } from "../../../../utils/style-injector";
 
 const STYLES = `
 /* Toggle button - base styles (override HackerWeb defaults) */
-.hwc-toggle.comments-toggle {
+.hwc-toggle {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.25em !important;
@@ -21,20 +21,20 @@ const STYLES = `
 }
 
 /* Hover state */
-.hwc-toggle.comments-toggle:hover {
+.hwc-toggle:hover {
   color: #e07020 !important;
   background-color: rgba(255, 140, 50, 0.10) !important;
   border-color: rgba(255, 140, 50, 0.25) !important;
 }
 
 /* Active/pressed state */
-.hwc-toggle.comments-toggle:active {
+.hwc-toggle:active {
   color: #ff6600 !important;
   background-color: rgba(255, 102, 0, 0.2) !important;
 }
 
 /* Focus state for keyboard users */
-.hwc-toggle.comments-toggle:focus-visible {
+.hwc-toggle:focus-visible {
   outline: 2px solid #ff6600 !important;
   outline-offset: 2px !important;
 }

@@ -25,6 +25,7 @@ describe("Saved page controls", () => {
     store.resetSavedStoreForTests();
     const controls = await import("./controls");
     controls.addSavedButtons("hn");
+    controls.addSavedButtons("hn");
     const cleanup = controls.setupSavedHandler("hn");
 
     const storyButton =
@@ -34,6 +35,8 @@ describe("Saved page controls", () => {
     expect(storyButton?.tagName).toBe("BUTTON");
     expect(storyButton?.getAttribute("aria-pressed")).toBe("false");
     expect(commentButton?.getAttribute("aria-label")).toBe("Save comment");
+    expect(document.querySelectorAll(".hwt-save-story")).toHaveLength(1);
+    expect(document.querySelectorAll(".hwt-save-comment")).toHaveLength(1);
 
     storyButton?.click();
     expect(store.hasSavedItem("hn:123")).toBe(true);

@@ -97,7 +97,7 @@ function createToggle(ul: HTMLUListElement): HTMLButtonElement | null {
 
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.className = `comments-toggle hwc-toggle${collapsed ? " hwc-collapsed" : ""}`;
+  btn.className = `hwc-toggle${collapsed ? " hwc-collapsed" : ""}`;
   btn.innerHTML = `<span class="hwc-arrow">▶</span> ${count}`;
   btn.dataset["count"] = String(count);
   btn.title = "Click to toggle, Shift+click to collapse thread";

@@ -42,10 +42,15 @@ function createSaveButton(kind: SavedItemKind, id: string): HTMLButtonElement {
 
 function addHnStoryButtons(): void {
   for (const row of qsa<HTMLElement>("tr.athing[id]")) {
-    if (qs(`.${SAVE_BUTTON_CLASS}.hwt-save-story`, row)) continue;
     const item = extractHnStory(row);
     const subtext = row.nextElementSibling?.querySelector(".subtext");
-    if (!item || !subtext) continue;
+    if (
+      !item ||
+      !subtext ||
+      qs(`.${SAVE_BUTTON_CLASS}.hwt-save-story`, subtext)
+    ) {
+      continue;
+    }
     subtext.append(
       document.createTextNode(" | "),
       createSaveButton("story", item.id)

@@ -113,7 +113,7 @@ describe("createToggleButton", () => {
 
     const btn = li.querySelector("button.hwc-toggle");
     expect(btn).not.toBeNull();
-    expect(btn?.classList.contains("comments-toggle")).toBe(true);
+    expect(btn?.classList.contains("comments-toggle")).toBe(false);
     expect(btn?.classList.contains("hwc-toggle")).toBe(true);
   });
 
