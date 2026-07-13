@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- One shared Saved library for stories and comments across Hacker News and
+  HackerWeb, with search, type filters, sorting, JSON import/export, and legacy
+  bookmark migration
+- Remembered Dark, Light, and System theme choices, with Dark as the default
 - Searchable Settings panel with enabled-feature summary
 - Responsive full-screen settings sheet for small screens
 - Dialog semantics, focus trapping, labelled controls, and live announcements
@@ -27,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Saved now uses one versioned userscript-storage document and the existing
+  Tools drawer instead of separate origin-local keys, a second floating button,
+  and a second panel
+- HackerWeb dark mode now uses explicit colors instead of whole-page inversion;
+  progress, copy feedback, favicons, settings, and Saved remain theme-correct
 - Settings are grouped accurately by HackerWeb, Hacker News, and shared scope
 - Settings features and counts are scoped to the current site/origin
 - Comfort mode is enabled by default on Hacker News; copy-comment links are

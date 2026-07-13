@@ -1,130 +1,100 @@
 # HackerWeb Tools
 
-A userscript that adds thread controls, display options, keyboard navigation,
-saved comments, and other optional tools to
-[Hacker News](https://news.ycombinator.com/) and
-[HackerWeb](https://hackerweb.app/).
-
-HackerWeb Tools is an independent userscript and is not affiliated with Y
-Combinator or the Hacker News/HackerWeb projects.
-
-## Install
+A userscript for reading Hacker News and HackerWeb without fighting either
+site: readable layouts, real Saved items, reliable thread controls, keyboard
+navigation, and dark by default.
 
 **[Install HackerWeb Tools](https://gist.githubusercontent.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6/raw/hackerweb-tools.user.js)**
+— requires [Tampermonkey](https://www.tampermonkey.net/) or
+[Violentmonkey](https://violentmonkey.github.io/).
 
-Requires [Tampermonkey](https://www.tampermonkey.net/) or
-[Violentmonkey](https://violentmonkey.github.io/). Updates are delivered through
-the same userscript URL.
+![HackerWeb Tools on Hacker News, HackerWeb, threads, and Saved](screenshots/overview.png)
 
-## Settings
+## What changes
 
-Open **Tools** or press `,` on either supported site. Settings let you:
+### Hacker News, cleaned up
 
-- Search every feature and control with `/`
-- See how many tools are enabled for the current site
-- Tune HackerWeb width, typography, and collapse behavior
-- Tune Hacker News story-score signals
-- Pause all configured enhancements on the current site
-- Reset all settings to their defaults
+Comfortable line lengths, clear metadata, HackerWeb shortcuts, and one save
+button per story. It still looks and behaves like Hacker News.
 
-Settings stay in page-local browser storage. Because Hacker News and HackerWeb
-are different origins, configure each one from its own site; shared tools are
-available on both but their preferences do not cross between them. The drawer is
-keyboard accessible, traps focus while open, closes with `Escape`, and becomes a
-full-screen sheet on small screens.
+![Hacker News in the default dark theme with saved stories](screenshots/hn-dark.png)
 
-Preferences save immediately. Reload after disabling a page-level feature to
-ensure that previously injected elements and listeners are removed.
+### HackerWeb threads you can follow
 
-## Features
+Collapse controls no longer collide with HackerWeb's handlers. Thread rails show
+nesting; ancestor highlighting, OP emphasis, and save buttons add context.
 
-Four features start enabled. All other features are disabled by default and can
-be enabled in Settings.
+![An expanded HackerWeb discussion with thread rails and save controls](screenshots/hackerweb-thread-dark.png)
 
-### HackerWeb
+### Saved means saved
 
-| Feature                | Default | What it does                                                                                      |
-| ---------------------- | :-----: | ------------------------------------------------------------------------------------------------- |
-| Thread collapsing      |   On    | Collapse a branch from its toggle, the left gutter, or with Shift-click; collapsed state persists |
-| OP badge               |   On    | Makes comments from the original poster easy to spot                                              |
-| Copy comment links     |   Off   | Copies the matching HN permalink when you click a comment timestamp                               |
-| New-comment highlight  |   Off   | Marks comments added since your previous visit                                                    |
-| Auto-collapse by depth |   Off   | Starts deeply nested discussions collapsed at a configurable depth                                |
+Stories and comments live in one versioned userscript-storage document shared by
+both hosts. Writes are atomic, old bookmarks migrate forward, and failed writes
+never leave a fake selected star.
 
-HackerWeb readability styles are scoped to the active comments view. They add
-visible thread rails and ancestor highlighting, plus configurable content width,
-font size, line height, and gutter target size.
+Saved supports:
 
-### Hacker News
+- Stories and comments from either site
+- Search, Story/Comment filters, and newest/oldest/title/type sorting
+- JSON export and validated merge import
+- Reload persistence and cross-tab updates
+- One `Saved` view inside Tools—no second floating button or panel
 
-| Feature               | Default | What it does                                                            |
-| --------------------- | :-----: | ----------------------------------------------------------------------- |
-| HackerWeb story links |   On    | Adds a `[hweb]` shortcut beside every story                             |
-| Hide read stories     |   Off   | Tracks opened stories and adds a read-story filter                      |
-| Story score signals   |   Off   | Emphasizes high scores and fades stories below a configurable threshold |
-| Time grouping         |   Off   | Separates stories into useful age bands                                 |
-| Story favicons        |   Off   | Adds site favicons beside stories using Google's favicon service        |
-| Comfort mode          |   On    | Centers the page and increases reading size and spacing                 |
+![The populated Saved view with search, sorting, filters, import, and export](screenshots/saved-dark.png)
 
-An `hckrnews` shortcut is also added to the Hacker News header.
+<p align="center">
+  <img src="screenshots/saved-mobile-dark.png" width="34%" alt="Saved on a mobile viewport">
+  <img src="screenshots/settings-light.png" width="63%" alt="Settings with a remembered Light theme override">
+</p>
 
-### Both sites
+### Dark by default
 
-| Feature             | Default | What it does                                              |
-| ------------------- | :-----: | --------------------------------------------------------- |
-| Keyboard navigation |   Off   | Adds vim-style navigation for stories and comment threads |
-| Dark-mode sync      |   Off   | Follows the operating-system light/dark preference        |
-| Reading progress    |   Off   | Shows a minimal page-progress indicator                   |
-| Comment bookmarks   |   Off   | Saves comments with their story, author, and preview text |
+Choose **Dark**, **Light**, or **System**. The choice is saved immediately and
+reapplied on reload. HackerWeb uses explicit dark colors rather than whole-page
+inversion, so images, settings, Saved, progress, and copy feedback keep the
+right colors.
 
-With keyboard navigation enabled, press `?` for the shortcuts available on the
-current site. `j` and `k` move through the current story or comment list.
+Defaults are dark theme, Saved, the HN comfort layout and HackerWeb links, plus
+HackerWeb collapsing and OP emphasis. Keyboard navigation, reading progress,
+new-comment markers, score signals, time grouping, favicons, hide-read, and
+automatic depth collapsing remain opt-in.
+
+## Controls
+
+Open **Tools** or press `,` on either site. The drawer contains two views:
+
+- **Settings** — theme, current-site features, layout, and thresholds
+- **Saved** — the shared library, filters, sorting, import, and export
+
+Other useful keys:
+
+| Key       | Action                                      |
+| --------- | ------------------------------------------- |
+| `,`       | Open or close Tools                         |
+| `/`       | Focus Settings search                       |
+| `Escape`  | Close Tools                                 |
+| `?`       | Show shortcuts when keyboard nav is enabled |
+| `j` / `k` | Move through stories or comments            |
+
+Preferences are local to each host. Saved uses shared userscript storage. There
+is no HackerWeb Tools account, backend, or sync server.
 
 ## Development
 
-The project is a strict TypeScript userscript built with Bun, Vite, and
-`vite-plugin-monkey`.
+Strict TypeScript, Bun, Vite, and `vite-plugin-monkey`:
 
 ```sh
 bun install
-bun run typecheck
-bun run lint
-bun run format:check
-bun run test:run
-bun run build
+bun run typecheck && bun run lint && bun run format:check
+bun run test:run && bun run build
 ```
 
-### Local testing
-
-1. Enable **Allow access to file URLs** in your userscript extension.
-2. Create a development userscript that points at the local build:
-
-   ```js
-   // ==UserScript==
-   // @name        Local Dev - HackerWeb Tools
-   // @match       https://hackerweb.app/*
-   // @match       https://news.ycombinator.com/*
-   // @require     file:///absolute/path/to/dist/hackerweb-tools.user.js
-   // ==/UserScript==
-   ```
-
-3. Run `bun run build:watch` and refresh the target page after changes.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture conventions and the PR
-checklist.
-
-### Publishing
-
-```sh
-bun run publish:dry    # Inspect the proposed release
-bun run publish        # Validate, tag, push, and update the install gist
-```
-
-Publishing requires push access to this repository and an authenticated `gh`
-session with access to the configured gist.
+Use `bun run build:watch` for local userscript work. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup and architecture; run
+`bun run publish:dry` before a release.
 
 ---
 
-**[Install](https://gist.githubusercontent.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6/raw/hackerweb-tools.user.js)** ·
-**[View the gist](https://gist.github.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6)** ·
-**[View on GitHub](https://github.com/swhitt/hackerweb-tools)**
+Independent project; not affiliated with Y Combinator, Hacker News, or
+HackerWeb. [Source](https://github.com/swhitt/hackerweb-tools) ·
+[Install gist](https://gist.github.com/swhitt/0fcf80442f2c0b55c01a90fa3a512df6)
