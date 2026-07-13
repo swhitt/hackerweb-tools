@@ -98,8 +98,7 @@ export function migrateConfig(stored: StoredConfig): StoredConfig {
         // an explicit override (defaults are sparse), so preserve its effective
         // "do not dim low scores" behavior at the new minimum of zero.
         const thresholds = config.thresholds as
-          | Record<string, unknown>
-          | undefined;
+          Record<string, unknown> | undefined;
         if (
           thresholds &&
           typeof thresholds["lowScoreThreshold"] === "number" &&

@@ -1,4 +1,5 @@
 import type { Features, Thresholds, Display } from "../../../config/types";
+import { DISPLAY_RANGES, THRESHOLD_RANGES } from "../../../config/validation";
 
 /**
  * Feature groupings for the settings panel UI
@@ -122,35 +123,27 @@ export const THRESHOLD_LABELS: Record<
 > = {
   autoCollapseDepth: {
     label: "Auto-collapse depth",
-    min: 1,
-    max: 20,
+    ...THRESHOLD_RANGES.autoCollapseDepth,
   },
   gutterClickPx: {
     label: "Gutter click width (px)",
-    min: 5,
-    max: 50,
+    ...THRESHOLD_RANGES.gutterClickPx,
   },
   highScoreThreshold: {
     label: "High score threshold",
-    min: 10,
-    max: 500,
-    step: 10,
+    ...THRESHOLD_RANGES.highScoreThreshold,
   },
   lowScoreThreshold: {
     label: "Low score threshold",
-    min: 0,
-    max: 100,
-    step: 5,
+    ...THRESHOLD_RANGES.lowScoreThreshold,
   },
   minScore: {
     label: "Minimum score",
-    min: -100,
-    max: 100,
+    ...THRESHOLD_RANGES.minScore,
   },
   minComments: {
     label: "Minimum comments",
-    min: 0,
-    max: 100,
+    ...THRESHOLD_RANGES.minComments,
   },
 };
 
@@ -161,32 +154,24 @@ export type DisplayLabelInfo =
   | { label: string; type: "text" | "color" }
   | { label: string; type: "number"; min: number; max: number; step?: number };
 
-export const DISPLAY_LABELS: Record<
-  Exclude<keyof Display, "themeMode">,
-  DisplayLabelInfo
-> = {
+export const DISPLAY_LABELS = {
   maxContentWidth: {
     label: "Max content width (px)",
     type: "number",
-    min: 400,
-    max: 2000,
-    step: 50,
+    ...DISPLAY_RANGES.maxContentWidth,
   },
   fontSize: {
     label: "Font size (px)",
     type: "number",
-    min: 10,
-    max: 24,
+    ...DISPLAY_RANGES.fontSize,
   },
   commentLineHeight: {
     label: "Line height",
     type: "number",
-    min: 1,
-    max: 3,
-    step: 0.1,
+    ...DISPLAY_RANGES.commentLineHeight,
   },
   newCommentColor: {
     label: "New comment color",
     type: "color",
   },
-};
+} satisfies Record<Exclude<keyof Display, "themeMode">, DisplayLabelInfo>;

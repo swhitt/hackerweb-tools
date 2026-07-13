@@ -11,7 +11,6 @@ import {
   FEATURE_LABELS,
   THRESHOLD_LABELS,
   DISPLAY_LABELS,
-  type DisplayLabelInfo,
 } from "./feature-groups";
 import {
   createSavedView,
@@ -43,6 +42,17 @@ let controlId = 0;
 const PULSE_ANIMATION_MS = 400;
 const PANEL_ID = "hwt-settings-panel";
 const PANEL_TITLE_ID = "hwt-settings-title";
+
+type ConfigurableDisplayKey = Exclude<keyof Display, "themeMode">;
+type DisplayKeyFor<T> = {
+  [K in ConfigurableDisplayKey]: Display[K] extends T ? K : never;
+}[ConfigurableDisplayKey];
+type NumberDisplayKey = DisplayKeyFor<number>;
+const DISPLAY_KEYS = [
+  "maxContentWidth",
+  "fontSize",
+  "commentLineHeight",
+] as const satisfies readonly NumberDisplayKey[];
 
 // Note: These SVG strings are hardcoded constants and must never accept external input
 const GEAR_ICON = `<svg viewBox="0 0 24 24" fill="currentColor">
@@ -545,87 +555,6 @@ function createSelectRow<T extends string>(
   return row;
 }
 
-/**
- * Create a text input for string settings
- */
-function createTextInput(
-  value: string,
-  inputId: string,
-  settingName: string,
-  onChange: (value: string) => void
-): HTMLInputElement {
-  const input = document.createElement("input");
-  input.type = "text";
-  input.id = inputId;
-  input.className = "hwt-text-input";
-  input.value = value;
-
-  input.addEventListener("change", () => {
-    onChange(input.value);
-    markReloadRequired(settingName);
-  });
-
-  return input;
-}
-
-/**
- * Create a color input for color settings
- */
-function createColorInput(
-  value: string,
-  inputId: string,
-  settingName: string,
-  onChange: (value: string) => void
-): HTMLInputElement {
-  const input = document.createElement("input");
-  input.type = "color";
-  input.id = inputId;
-  input.className = "hwt-color-input";
-  input.value = value;
-
-  input.addEventListener("change", () => {
-    onChange(input.value);
-    markReloadRequired(settingName);
-  });
-
-  return input;
-}
-
-/**
- * Create a row for a text or color setting
- */
-function createDisplayRow(
-  label: string,
-  value: string,
-  type: "text" | "color",
-  onChange: (value: string) => void
-): HTMLDivElement {
-  const row = document.createElement("div");
-  row.className = "hwt-settings-row";
-  row.dataset["hwtSearch"] = label.toLowerCase();
-
-  const id = `hwt-setting-${++controlId}`;
-
-  const info = document.createElement("div");
-  info.className = "hwt-settings-row-info";
-
-  const labelEl = document.createElement("label");
-  labelEl.className = "hwt-settings-row-label";
-  labelEl.htmlFor = id;
-  labelEl.textContent = label;
-
-  info.appendChild(labelEl);
-  row.appendChild(info);
-
-  const input =
-    type === "color"
-      ? createColorInput(value, id, label, onChange)
-      : createTextInput(value, id, label, onChange);
-  row.appendChild(input);
-
-  return row;
-}
-
 // ============================================================================
 // Section Builders
 // ============================================================================
@@ -792,39 +721,21 @@ function createDisplaySection(): HTMLDivElement {
 
   return createSection("Reading layout", () => {
     const rows: HTMLElement[] = [];
-    const keys: Exclude<keyof Display, "themeMode">[] = [
-      "maxContentWidth",
-      "fontSize",
-      "commentLineHeight",
-    ];
 
-    for (const key of keys) {
-      const info: DisplayLabelInfo = DISPLAY_LABELS[key];
-      if (info.type === "number") {
-        rows.push(
-          createNumberRow(
-            info.label,
-            configStore.get("display", key) as number,
-            info.min,
-            info.max,
-            info.step ?? 1,
-            (value) => {
-              configStore.set("display", key, value as Display[typeof key]);
-            }
-          )
-        );
-      } else {
-        rows.push(
-          createDisplayRow(
-            info.label,
-            configStore.get("display", key) as string,
-            info.type,
-            (value) => {
-              configStore.set("display", key, value as Display[typeof key]);
-            }
-          )
-        );
-      }
+    for (const key of DISPLAY_KEYS) {
+      const info = DISPLAY_LABELS[key];
+      rows.push(
+        createNumberRow(
+          info.label,
+          configStore.get("display", key),
+          info.min,
+          info.max,
+          "step" in info ? info.step : 1,
+          (value) => {
+            configStore.set("display", key, value);
+          }
+        )
+      );
     }
 
     return [

@@ -8,6 +8,7 @@ import type {
 } from "./types";
 import { DEFAULT_CONFIG, CONFIG_VERSION } from "./defaults";
 import { migrateConfig } from "./migrations";
+import { decodeConfig, decodeStoredConfig } from "./validation";
 
 export const STORAGE_KEY = "hwt:config";
 const LOG_PREFIX = "[HWT Config]";
@@ -77,16 +78,40 @@ class ConfigStore {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
 
-      const parsed = JSON.parse(raw) as StoredConfig;
-
-      // Run migrations if needed
-      if (parsed.version < CONFIG_VERSION) {
-        const migrated = migrateConfig(parsed);
-        this.save(migrated.config);
-        return migrated;
+      const parsed: unknown = JSON.parse(raw);
+      const stored = decodeStoredConfig(parsed);
+      if (!stored.ok) {
+        console.warn(
+          LOG_PREFIX,
+          `Ignoring invalid stored config: ${stored.error}`
+        );
+        return null;
       }
 
-      return parsed;
+      const migrated =
+        stored.value.version < CONFIG_VERSION
+          ? migrateConfig(stored.value)
+          : stored.value;
+      const decoded = decodeConfig(migrated.config);
+      if (!decoded.ok) {
+        console.warn(
+          LOG_PREFIX,
+          `Ignoring invalid stored config: ${decoded.error}`
+        );
+        return null;
+      }
+
+      const normalized: StoredConfig = {
+        version: CONFIG_VERSION,
+        config: decoded.value,
+      };
+      if (
+        stored.value.version < CONFIG_VERSION ||
+        JSON.stringify(migrated.config) !== JSON.stringify(decoded.value)
+      ) {
+        this.save(decoded.value);
+      }
+      return normalized;
     } catch (error) {
       console.warn(LOG_PREFIX, "Failed to load config:", error);
       return null;
@@ -126,7 +151,7 @@ class ConfigStore {
     section: S,
     key: K
   ): UserConfig[S][K] {
-    return this.config[section][key];
+    return deepClone(this.config[section][key]);
   }
 
   /**
@@ -137,33 +162,36 @@ class ConfigStore {
     key: K,
     value: UserConfig[S][K]
   ): void {
-    const oldValue = this.config[section][key];
-    if (oldValue === value) return;
+    const oldSection = this.getSection(section);
+    const oldValue = deepClone(this.config[section][key]);
+    if (JSON.stringify(oldValue) === JSON.stringify(value)) return;
+    const newValue = deepClone(value);
 
     // Update override
     if (!this.overrides[section]) {
       (this.overrides as Record<S, object>)[section] = {};
     }
-    (this.overrides[section] as Record<K, unknown>)[key] = value;
+    (this.overrides[section] as Record<K, unknown>)[key] = deepClone(newValue);
 
     // Update resolved config
-    (this.config[section] as Record<K, unknown>)[key] = value;
+    (this.config[section] as Record<K, unknown>)[key] = newValue;
 
     // Persist
     this.save(this.overrides);
 
     // Notify listeners
-    this.notifyListeners(section, key, value, oldValue);
+    this.notifyListeners(section, key, newValue, oldValue, oldSection);
   }
 
   /**
    * Reset a specific config value to default
    */
   reset<S extends ConfigSection>(section: S, key: ConfigKey<S>): void {
-    const oldValue = this.config[section][key];
-    const defaultValue = DEFAULT_CONFIG[section][key];
+    const oldSection = this.getSection(section);
+    const oldValue = deepClone(this.config[section][key]);
+    const defaultValue = deepClone(DEFAULT_CONFIG[section][key]);
 
-    if (oldValue === defaultValue) return;
+    if (JSON.stringify(oldValue) === JSON.stringify(defaultValue)) return;
 
     // Remove override
     if (this.overrides[section]) {
@@ -171,7 +199,7 @@ class ConfigStore {
         string,
         unknown
       >;
-      Reflect.deleteProperty(sectionOverrides, key as string);
+      Reflect.deleteProperty(sectionOverrides, key);
 
       // Clean up empty section
       if (Object.keys(sectionOverrides).length === 0) {
@@ -190,7 +218,7 @@ class ConfigStore {
     this.save(this.overrides);
 
     // Notify listeners
-    this.notifyListeners(section, key, defaultValue, oldValue);
+    this.notifyListeners(section, key, defaultValue, oldValue, oldSection);
   }
 
   /**
@@ -215,27 +243,37 @@ class ConfigStore {
       const section = listener.section;
       const key = listener.key;
       // Use indexed access to get values from the config objects
-      const oldSection = oldConfig[section] as unknown as Record<
+      const oldSection = oldConfig[section] as object as Record<
         string,
         unknown
       >;
-      const newSection = this.config[section] as unknown as Record<
+      const newSection = this.config[section] as object as Record<
         string,
         unknown
       >;
       const oldValue = oldSection[key];
       const newValue = newSection[key];
 
-      if (oldValue !== newValue) {
-        listener.callback(newValue, oldValue);
+      if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+        try {
+          listener.callback(deepClone(newValue), deepClone(oldValue));
+        } catch (error) {
+          console.error(LOG_PREFIX, "Error in config listener:", error);
+        }
       }
     }
 
     // Notify section listeners
     for (const [section, sectionListeners] of this.listeners) {
-      const sectionValue = this.getSection(section as ConfigSection);
+      const typedSection = section as ConfigSection;
+      const oldSection = deepClone(oldConfig[typedSection]);
+      const newSection = this.getSection(typedSection);
       for (const callback of sectionListeners) {
-        callback(sectionValue, sectionValue);
+        try {
+          callback(deepClone(newSection), deepClone(oldSection));
+        } catch (error) {
+          console.error(LOG_PREFIX, "Error in section listener:", error);
+        }
       }
     }
   }
@@ -281,13 +319,14 @@ class ConfigStore {
     section: S,
     key: K,
     newValue: UserConfig[S][K],
-    oldValue: UserConfig[S][K]
+    oldValue: UserConfig[S][K],
+    oldSection: UserConfig[S]
   ): void {
     // Notify nested listeners
     for (const listener of this.nestedListeners) {
       if (listener.section === section && listener.key === key) {
         try {
-          listener.callback(newValue, oldValue);
+          listener.callback(deepClone(newValue), deepClone(oldValue));
         } catch (error) {
           console.error(LOG_PREFIX, "Error in config listener:", error);
         }
@@ -297,10 +336,10 @@ class ConfigStore {
     // Notify section listeners
     const sectionListeners = this.listeners.get(section);
     if (sectionListeners) {
-      const sectionValue = this.getSection(section);
+      const newSection = this.getSection(section);
       for (const callback of sectionListeners) {
         try {
-          callback(sectionValue, sectionValue);
+          callback(deepClone(newSection), deepClone(oldSection));
         } catch (error) {
           console.error(LOG_PREFIX, "Error in section listener:", error);
         }
@@ -316,35 +355,19 @@ class ConfigStore {
   }
 
   /**
-   * Validate imported config has expected structure
-   */
-  private isValidConfig(obj: unknown): obj is DeepPartial<UserConfig> {
-    if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
-      return false;
-    }
-    // Check that all top-level keys are valid config sections
-    const validSections = new Set(Object.keys(DEFAULT_CONFIG));
-    for (const key of Object.keys(obj)) {
-      if (!validSections.has(key)) return false;
-      const section = (obj as Record<string, unknown>)[key];
-      if (typeof section !== "object" || section === null) return false;
-    }
-    return true;
-  }
-
-  /**
    * Import config from JSON string
    */
   import(json: string): boolean {
     try {
       const parsed: unknown = JSON.parse(json);
-      if (!this.isValidConfig(parsed)) {
-        console.error(LOG_PREFIX, "Invalid config structure");
+      const decoded = decodeConfig(parsed);
+      if (!decoded.ok) {
+        console.error(LOG_PREFIX, `Invalid config: ${decoded.error}`);
         return false;
       }
 
       const oldConfig = this.config;
-      this.overrides = parsed;
+      this.overrides = decoded.value;
       this.config = deepMerge(deepClone(DEFAULT_CONFIG), this.overrides);
       this.save(this.overrides);
 

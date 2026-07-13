@@ -28,6 +28,15 @@ export type {
 // Defaults
 export { DEFAULT_CONFIG, CONFIG_VERSION } from "./defaults";
 
+// Runtime validation and shared numeric constraints
+export {
+  decodeConfig,
+  decodeStoredConfig,
+  THRESHOLD_RANGES,
+  DISPLAY_RANGES,
+} from "./validation";
+export type { DecodeResult, NumericRange } from "./validation";
+
 // Store
 export { getConfigStore, resetConfigStore, STORAGE_KEY } from "./store";
 
