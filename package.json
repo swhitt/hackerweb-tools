@@ -1,13 +1,15 @@
 {
   "name": "hackerweb-tools",
-  "version": "1.0.0",
+  "private": true,
   "type": "module",
   "description": "Enhancements for Hacker News and HackerWeb",
   "scripts": {
-    "prepare": "lefthook install",
+    "deps:audit": "bun audit",
+    "hooks:install": "lefthook install",
     "build": "vite build -c vite/config.ts",
     "build:watch": "vite build -c vite/config.ts --watch",
     "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "lint": "eslint .",
@@ -26,26 +28,31 @@
   "author": "Steve Whittaker <swhitt@gmail.com>",
   "license": "MIT",
   "engines": {
-    "bun": ">=1.3.8"
+    "bun": ">=1.3.14"
   },
-  "packageManager": "bun@1.3.8",
+  "packageManager": "bun@1.3.14",
+  "overrides": {
+    "flatted": "^3.4.2",
+    "minimatch": "^10.2.5",
+    "picomatch": "^4.0.5",
+    "postcss": "^8.5.18"
+  },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@types/bun": "^1.3.8",
-    "@types/node": "^25.1.0",
-    "@vitejs/plugin-basic-ssl": "^2.1.4",
-    "@vitest/ui": "^4.0.18",
-    "eslint": "^9.39.2",
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.3.14",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/ui": "^4.1.10",
+    "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.2.0",
-    "jiti": "^2.6.1",
-    "jsdom": "^27.4.0",
-    "lefthook": "^2.0.16",
-    "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0",
-    "vite": "^7.3.1",
-    "vite-plugin-monkey": "^7.1.9",
-    "vitest": "^4.0.18"
+    "globals": "^17.7.0",
+    "jiti": "^2.7.0",
+    "jsdom": "^29.1.1",
+    "lefthook": "^2.1.10",
+    "prettier": "^3.9.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0",
+    "vite": "^8.1.4",
+    "vite-plugin-monkey": "^8.0.6",
+    "vitest": "^4.1.10"
   }
 }

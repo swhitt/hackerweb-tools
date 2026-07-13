@@ -2,8 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Distributed userscripts use a four-part `{version}.{build}` version so script
+managers can compare each gist deployment monotonically.
 
 ## [Unreleased]
 
@@ -28,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chevron toggle indicators with CSS rotation animation
 - Pre-commit hooks with lefthook (lint, format, typecheck)
 - Auto-update support from GitHub gist
+- Weekly Dependabot updates for Bun packages and GitHub Actions
+- Diagnostic test coverage reporting
+- A verified gist-only recovery mode for releases whose repository push succeeds
+  before the gist update fails
 
 ### Changed
 
@@ -44,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   view
 - Settings use a new warm-paper and graphite visual system
 - Public feature documentation and userscript metadata reflect the full product
+- Userscript metadata links installed scripts back to their source repository
+- Production builds clean the output directory and omit undeployed source maps
+- The development toolchain now uses Bun 1.3.14, TypeScript 6, ESLint 10,
+  Vite 8, Vitest 4.1, and current compatible supporting packages
+- Git hook installation is explicit so package installs work with custom global
+  hook paths
 - Comment timestamp displays on same row as username
 - Display settings (max width, font size, line height) use number inputs
 - Display settings apply reactively via CSS custom properties
@@ -71,8 +82,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Publishing rejects all dirty-tree states and pushes only the intended branch/tag
 - Publishing preflights branch synchronization, tag availability, GitHub auth, and gist ownership
 - CI uses the repository's pinned Bun version and frozen lockfile
+- CI has a dependency audit, explicit read-only permissions, stale-run
+  cancellation, a timeout, and no persisted checkout credentials
+- Release docs now match the four-part dot-separated versions used by builds
+  and tags
+- Stored and imported configuration now rejects unknown or invalid values,
+  clamps documented numeric ranges, and reports distinct old/new snapshots
 - Pre-commit lint and format jobs no longer race while rewriting staged files
 - Dark mode text illegible in settings panel inputs
+- HackerWeb comment spacing no longer exposes white native section backgrounds
 - Bookmark data lost on page reload (now persisted to localStorage)
 
 ## [1.0.0] - 2026-01-31

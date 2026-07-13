@@ -4,6 +4,7 @@
 
 ```sh
 bun install
+bun run hooks:install # optional; skip when using a custom core.hooksPath
 bun run build:watch
 ```
 
@@ -29,7 +30,9 @@ bun run build:watch
 - **Prettier**: `bun run format:check` (fix with `bun run format`)
 - **TypeScript**: Strict mode enabled; run `bun run typecheck`
 
-Lefthook runs lint and format checks automatically on commit.
+After `bun run hooks:install`, Lefthook runs lint, format, and type checks on
+commit. Hook installation is explicit so dependency installs remain reliable
+for contributors who manage Git hooks globally.
 
 ## Adding a New Site Feature
 
@@ -60,6 +63,21 @@ src/sites/mysite/
 bun run test        # Watch mode
 bun run test:run    # Single run
 ```
+
+## Releasing
+
+The userscript version comes only from `config.ts`; `package.json` is private
+toolchain metadata and has no release version. From a clean `main` branch:
+
+```sh
+bun run publish:dry
+bun run publish
+```
+
+The publisher validates the repository and gist, creates the release commit and
+tag, atomically pushes both, then updates and verifies the install gist. If the
+push succeeds but the gist step fails, resume that same release with
+`bun run publish --retry-gist` instead of incrementing the build again.
 
 ## PR Checklist
 

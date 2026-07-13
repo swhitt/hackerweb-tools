@@ -10,6 +10,10 @@ export default defineConfig(
   ...tseslint.configs.stylisticTypeChecked,
   prettier,
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: "error",
+      reportUnusedInlineConfigs: "error",
+    },
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -37,6 +41,6 @@ export default defineConfig(
     },
   },
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: ["coverage/**", "dist/**", "node_modules/**"],
   }
 );

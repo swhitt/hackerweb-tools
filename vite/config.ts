@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import monkey from "vite-plugin-monkey";
 import { updateUrl, gist, fullVersion } from "../config";
 
+const repositoryUrl = "https://github.com/swhitt/hackerweb-tools";
+
 export default defineConfig({
   plugins: [
     monkey({
@@ -12,6 +14,8 @@ export default defineConfig({
         version: fullVersion,
         author: "Steve Whittaker",
         license: "MIT",
+        homepageURL: repositoryUrl,
+        source: repositoryUrl,
         description:
           "A userscript for Hacker News and HackerWeb with thread controls, readable layouts, keyboard navigation, and Saved",
         match: ["https://hackerweb.app/*", "https://news.ycombinator.com/*"],
@@ -29,7 +33,7 @@ export default defineConfig({
   ],
   build: {
     minify: false,
-    emptyOutDir: false,
-    sourcemap: true,
+    emptyOutDir: true,
+    sourcemap: false,
   },
 });
